@@ -56,8 +56,8 @@ declare class Make {
     tagBalsa(obj: any): void;
     tagVol(obj: any): void;
     tagLacres(obj: any): void;
-    tagFat(obj: any): void;
-    tagDup(obj: any): void;
+    tagFat(obj: any): this;
+    tagDup(lista: any[]): this;
     tagTroco(obj: any): void;
     tagDetPag(obj: any): void;
     tagIntermed(obj: any): void;
