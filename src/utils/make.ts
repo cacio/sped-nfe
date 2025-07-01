@@ -647,12 +647,45 @@ class Make {
     }
 
     tagFat(obj: any) {
-        throw "Não implementado!";
+        if (!obj) throw new Error("Parâmetro obrigatório para tagFat está vazio");
+
+        const cobr = this.#NFe.infNFe.cobr ??= {}; // Garante que 'cobr' existe
+        const fat: Record<string, any> = cobr.fat = {};
+
+        for (const key of ['nFat', 'vOrig', 'vDesc', 'vLiq']) {
+            if (['vOrig', 'vDesc', 'vLiq'].includes(key)) {
+                fat[key] = Number(obj[key]).toFixed(2);
+            } else {
+                fat[key] = obj[key];
+            }
+        }
+
+        return this;
     }
 
-    tagDup(obj: any) {
-        throw "Não implementado!";
+    tagDup(lista: any[]) {
+        if (!Array.isArray(lista) || lista.length === 0) {
+            throw new Error("Parâmetro obrigatório para tagDup deve ser uma lista não vazia");
+        }
+
+        const cobr = this.#NFe.infNFe.cobr ??= {};
+        cobr.dup = [];
+
+        for (const dup of lista) {
+            if (!dup.nDup || !dup.dVenc || !dup.vDup) {
+                throw new Error("Campos obrigatórios em 'dup' ausentes: nDup, dVenc e vDup");
+            }
+
+            cobr.dup.push({
+                nDup: dup.nDup,
+                dVenc: dup.dVenc,
+                vDup: Number(dup.vDup).toFixed(2),
+            });
+        }
+
+        return this;
     }
+
 
     //tagpag()
     tagTroco(obj: any) {
