@@ -234,8 +234,15 @@ class Make {
         throw "não implementado!";
     }
     tagProdICMS(index, obj) {
-        if (__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS === undefined)
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f")?.infNFe?.det?.[index]) {
+            throw new Error(`Produto na posição ${index} não existe em infNFe.det`);
+        }
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto) {
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto = {};
+        }
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS) {
             __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS = {};
+        }
         let keyXML = "";
         switch (obj.CST) {
             case '00':
@@ -267,14 +274,18 @@ class Make {
             case '90':
                 keyXML = 'ICMS90';
                 break;
-            default: throw new Error('CST inválido');
+            default: throw new Error(`CST inválido: ${obj.CST}`);
         }
-        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = {};
-        Object.keys(obj).forEach(key => {
-            if (!['orig', 'CST', 'modBC', 'modBCST', 'motDesICMS', 'motDesICMSST', 'cBenefRBC', 'indDeduzDeson', 'UFST'].includes(key))
-                obj[key] = obj[key] == 0 ? "0.00" : obj[key];
-            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML][key] = obj[key];
-        });
+        const icmsTag = {};
+        for (const key of Object.keys(obj)) {
+            if (!['orig', 'CST', 'modBC', 'modBCST', 'motDesICMS', 'motDesICMSST', 'cBenefRBC', 'indDeduzDeson', 'UFST'].includes(key)) {
+                icmsTag[key] = obj[key] == 0 ? "0.00" : obj[key];
+            }
+            else {
+                icmsTag[key] = obj[key];
+            }
+        }
+        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = icmsTag;
     }
     tagProdICMSPart(index, obj) {
         if (__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS === undefined)

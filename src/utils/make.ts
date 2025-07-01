@@ -262,7 +262,18 @@ class Make {
     }
 
     tagProdICMS(index: number, obj: any) {
-        if (this.#NFe.infNFe.det[index].imposto.ICMS === undefined) this.#NFe.infNFe.det[index].imposto.ICMS = {};
+        if (!this.#NFe?.infNFe?.det?.[index]) {
+            throw new Error(`Produto na posição ${index} não existe em infNFe.det`);
+        }
+
+        if (!this.#NFe.infNFe.det[index].imposto) {
+            this.#NFe.infNFe.det[index].imposto = {};
+        }
+
+        if (!this.#NFe.infNFe.det[index].imposto.ICMS) {
+            this.#NFe.infNFe.det[index].imposto.ICMS = {};
+        }
+
         let keyXML = "";
         switch (obj.CST) {
             case '00': keyXML = 'ICMS00'; break;
@@ -274,16 +285,21 @@ class Make {
             case '60': keyXML = 'ICMS60'; break;
             case '70': keyXML = 'ICMS70'; break;
             case '90': keyXML = 'ICMS90'; break;
-            default: throw new Error('CST inválido');
+            default: throw new Error(`CST inválido: ${obj.CST}`);
         }
 
-        this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = {};
-        Object.keys(obj).forEach(key => {
-            if (!['orig', 'CST', 'modBC', 'modBCST', 'motDesICMS', 'motDesICMSST', 'cBenefRBC', 'indDeduzDeson', 'UFST'].includes(key))
-                obj[key] = obj[key] == 0 ? "0.00" : obj[key];
-            this.#NFe.infNFe.det[index].imposto.ICMS[keyXML][key] = obj[key];
-        });
+        const icmsTag: Record<string, any> = {};
+        for (const key of Object.keys(obj)) {
+            if (!['orig', 'CST', 'modBC', 'modBCST', 'motDesICMS', 'motDesICMSST', 'cBenefRBC', 'indDeduzDeson', 'UFST'].includes(key)) {
+                icmsTag[key] = obj[key] == 0 ? "0.00" : obj[key];
+            } else {
+                icmsTag[key] = obj[key];
+            }
+        }
+
+        this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = icmsTag;
     }
+
 
     tagProdICMSPart(index: number, obj: any) {
         if (this.#NFe.infNFe.det[index].imposto.ICMS === undefined) this.#NFe.infNFe.det[index].imposto.ICMS = {};
