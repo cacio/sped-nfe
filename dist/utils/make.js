@@ -381,19 +381,28 @@ class Make {
         });
         __classPrivateFieldGet(this, _Make_instances, "m", _Make_calICMSTot)?.call(this, obj); // opcional
     }
-    tagProdIPI(index, obj) {
-        if (__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI === undefined)
+    tagProdIPI(index, data) {
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f")?.infNFe?.det?.[index]) {
+            throw new Error(`Produto na posição ${index} não existe em infNFe.det`);
+        }
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto) {
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto = {};
+        }
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI) {
             __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI = {};
+        }
+        const obj = this.equalizeIPIParameters(data);
         // Campo obrigatório na raiz do IPI
         __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI.cEnq = obj.cEnq;
-        delete obj.cEnq;
         let keyXML = "";
+        let ipiTag = {}; // Use um objeto local para construir a tag
         switch (obj.CST) {
             case '00':
             case '49':
             case '50':
             case '99':
                 keyXML = 'IPITrib';
+                ipiTag = this.generateIPITrib(obj);
                 break;
             case '01':
             case '02':
@@ -406,16 +415,25 @@ class Make {
             case '54':
             case '55':
                 keyXML = 'IPINT';
+                ipiTag = this.generateIPINT(obj);
                 break;
             default:
                 throw new Error("CST de IPI não identificado!");
         }
-        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI[keyXML] = {};
-        Object.keys(obj).forEach(key => {
-            if (key != 'CST')
-                obj[key] = obj[key] == 0 ? "0.00" : obj[key];
-            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI[keyXML][key] = obj[key];
-        });
+        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI[keyXML] = ipiTag;
+        // Adicionar campos opcionais na raiz do IPI
+        if (obj.clEnq) {
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI.clEnq = obj.clEnq;
+        }
+        if (obj.CNPJProd) {
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI.CNPJProd = obj.CNPJProd;
+        }
+        if (obj.cSelo) {
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI.cSelo = obj.cSelo;
+        }
+        if (obj.qSelo) {
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI.qSelo = obj.qSelo;
+        }
         __classPrivateFieldGet(this, _Make_instances, "m", _Make_calICMSTot).call(this, obj); // opcional se considerar IPI no total
     }
     tagProdII(index, obj) {
@@ -939,6 +957,43 @@ class Make {
         __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'vICMSSTDeson', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSSTDeson), false);
         __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'motDesICMSST', obj.motDesICMSST, false);
         return icms90;
+    }
+    equalizeIPIParameters(obj) {
+        const possible = [
+            'item',
+            'clEnq',
+            'CNPJProd',
+            'cSelo',
+            'qSelo',
+            'cEnq',
+            'CST',
+            'vIPI',
+            'vBC',
+            'pIPI',
+            'qUnid',
+            'vUnid'
+        ];
+        for (const key of possible) {
+            if (obj[key] === undefined) {
+                obj[key] = null;
+            }
+        }
+        return obj;
+    }
+    generateIPITrib(obj) {
+        const ipiTrib = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, ipiTrib, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, ipiTrib, 'vBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBC), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, ipiTrib, 'pIPI', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pIPI, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, ipiTrib, 'qUnid', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.qUnid, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, ipiTrib, 'vUnid', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vUnid, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, ipiTrib, 'vIPI', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vIPI), true);
+        return ipiTrib;
+    }
+    generateIPINT(obj) {
+        const ipiNT = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, ipiNT, 'CST', obj.CST, true);
+        return ipiNT;
     }
     xml() {
         if (__classPrivateFieldGet(this, _Make_NFe, "f").infNFe[`@Id`] == null)

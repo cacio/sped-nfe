@@ -423,21 +423,34 @@ class Make {
         this.#calICMSTot?.(obj); // opcional
     }
 
-    tagProdIPI(index: number, obj: any) {
-        if (this.#NFe.infNFe.det[index].imposto.IPI === undefined)
-            this.#NFe.infNFe.det[index].imposto.IPI = {};
+    tagProdIPI(index: number, data: any) {
+        if (!this.#NFe?.infNFe?.det?.[index]) {
+            throw new Error(`Produto na posição ${index} não existe em infNFe.det`);
+        }
 
+        if (!this.#NFe.infNFe.det[index].imposto) {
+            this.#NFe.infNFe.det[index].imposto = {};
+        }
+
+        if (!this.#NFe.infNFe.det[index].imposto.IPI) {
+            this.#NFe.infNFe.det[index].imposto.IPI = {};
+        }
+
+        const obj = this.equalizeIPIParameters(data);
 
         // Campo obrigatório na raiz do IPI
         this.#NFe.infNFe.det[index].imposto.IPI.cEnq = obj.cEnq;
-        delete obj.cEnq;
+
         let keyXML = "";
+        let ipiTag: Record<string, any> = {}; // Use um objeto local para construir a tag
+
         switch (obj.CST) {
             case '00':
             case '49':
             case '50':
             case '99':
                 keyXML = 'IPITrib';
+                ipiTag = this.generateIPITrib(obj);
                 break;
             case '01':
             case '02':
@@ -450,17 +463,27 @@ class Make {
             case '54':
             case '55':
                 keyXML = 'IPINT';
+                ipiTag = this.generateIPINT(obj);
                 break;
             default:
                 throw new Error("CST de IPI não identificado!");
         }
 
-        this.#NFe.infNFe.det[index].imposto.IPI[keyXML] = {};
-        Object.keys(obj).forEach(key => {
-            if (key != 'CST')
-                obj[key] = obj[key] == 0 ? "0.00" : obj[key];
-            this.#NFe.infNFe.det[index].imposto.IPI[keyXML][key] = obj[key];
-        });
+        this.#NFe.infNFe.det[index].imposto.IPI[keyXML] = ipiTag;
+
+        // Adicionar campos opcionais na raiz do IPI
+        if (obj.clEnq) {
+            this.#NFe.infNFe.det[index].imposto.IPI.clEnq = obj.clEnq;
+        }
+        if (obj.CNPJProd) {
+            this.#NFe.infNFe.det[index].imposto.IPI.CNPJProd = obj.CNPJProd;
+        }
+        if (obj.cSelo) {
+            this.#NFe.infNFe.det[index].imposto.IPI.cSelo = obj.cSelo;
+        }
+        if (obj.qSelo) {
+            this.#NFe.infNFe.det[index].imposto.IPI.qSelo = obj.qSelo;
+        }
 
         this.#calICMSTot(obj); // opcional se considerar IPI no total
     }
@@ -1124,6 +1147,47 @@ class Make {
         this.#addChildJS(icms90, 'vICMSSTDeson', this.#conditionalNumberFormatting(obj.vICMSSTDeson), false);
         this.#addChildJS(icms90, 'motDesICMSST', obj.motDesICMSST, false);
         return icms90;
+    }
+
+    equalizeIPIParameters(obj: any) {
+        const possible = [
+            'item',
+            'clEnq',
+            'CNPJProd',
+            'cSelo',
+            'qSelo',
+            'cEnq',
+            'CST',
+            'vIPI',
+            'vBC',
+            'pIPI',
+            'qUnid',
+            'vUnid'
+        ];
+
+        for (const key of possible) {
+            if (obj[key] === undefined) {
+                obj[key] = null;
+            }
+        }
+        return obj;
+    }
+
+    generateIPITrib(obj: any): Record<string, any> {
+        const ipiTrib: Record<string, any> = {};
+        this.#addChildJS(ipiTrib, 'CST', obj.CST, true);
+        this.#addChildJS(ipiTrib, 'vBC', this.#conditionalNumberFormatting(obj.vBC), false);
+        this.#addChildJS(ipiTrib, 'pIPI', this.#conditionalNumberFormatting(obj.pIPI, 4), false);
+        this.#addChildJS(ipiTrib, 'qUnid', this.#conditionalNumberFormatting(obj.qUnid, 4), false);
+        this.#addChildJS(ipiTrib, 'vUnid', this.#conditionalNumberFormatting(obj.vUnid, 4), false);
+        this.#addChildJS(ipiTrib, 'vIPI', this.#conditionalNumberFormatting(obj.vIPI), true);
+        return ipiTrib;
+    }
+
+    generateIPINT(obj: any): Record<string, any> {
+        const ipiNT: Record<string, any> = {};
+        this.#addChildJS(ipiNT, 'CST', obj.CST, true);
+        return ipiNT;
     }
 
     xml() {

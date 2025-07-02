@@ -36,7 +36,7 @@ declare class Make {
     tagProdICMSST(index: number, obj: any): void;
     tagProdICMSSN(index: number, obj: any): void;
     tagProdICMSUFDest(index: number, obj: any): void;
-    tagProdIPI(index: number, obj: any): void;
+    tagProdIPI(index: number, data: any): void;
     tagProdII(index: number, obj: any): void;
     tagProdPIS(index: number, obj: any): void;
     tagProdPISST(index: number, obj: any): void;
@@ -87,6 +87,9 @@ declare class Make {
     generateICMS61(obj: any): Record<string, any>;
     generateICMS70(obj: any): Record<string, any>;
     generateICMS90(obj: any): Record<string, any>;
+    equalizeIPIParameters(obj: any): any;
+    generateIPITrib(obj: any): Record<string, any>;
+    generateIPINT(obj: any): Record<string, any>;
     xml(): any;
 }
 export { Make };
