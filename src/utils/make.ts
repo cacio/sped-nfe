@@ -420,7 +420,8 @@ class Make {
 
         this.#NFe.infNFe.det[index].imposto.IPI[keyXML] = {};
         Object.keys(obj).forEach(key => {
-            obj[key] = obj[key] == 0 ? "0.00" : obj[key];
+            if (key != 'CST')
+                obj[key] = obj[key] == 0 ? "0.00" : obj[key];
             this.#NFe.infNFe.det[index].imposto.IPI[keyXML][key] = obj[key];
         });
 

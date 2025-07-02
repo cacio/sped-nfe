@@ -395,7 +395,8 @@ class Make {
         }
         __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI[keyXML] = {};
         Object.keys(obj).forEach(key => {
-            obj[key] = obj[key] == 0 ? "0.00" : obj[key];
+            if (key != 'CST')
+                obj[key] = obj[key] == 0 ? "0.00" : obj[key];
             __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.IPI[keyXML][key] = obj[key];
         });
         __classPrivateFieldGet(this, _Make_instances, "m", _Make_calICMSTot).call(this, obj); // opcional se considerar IPI no total
