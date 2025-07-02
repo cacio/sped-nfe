@@ -261,7 +261,7 @@ class Make {
         throw "não implementado!";
     }
 
-    tagProdICMS(index: number, obj: any) {
+    tagProdICMS(index: number, data: any) {
         if (!this.#NFe?.infNFe?.det?.[index]) {
             throw new Error(`Produto na posição ${index} não existe em infNFe.det`);
         }
@@ -274,30 +274,67 @@ class Make {
             this.#NFe.infNFe.det[index].imposto.ICMS = {};
         }
 
+        const obj = this.#equalizeICMSParameters(data);
+
         let keyXML = "";
         switch (obj.CST) {
-            case '00': keyXML = 'ICMS00'; break;
-            case '10': keyXML = 'ICMS10'; break;
-            case '20': keyXML = 'ICMS20'; break;
-            case '30': keyXML = 'ICMS30'; break;
-            case '40': case '41': case '50': keyXML = 'ICMS40'; break;
-            case '51': keyXML = 'ICMS51'; break;
-            case '60': keyXML = 'ICMS60'; break;
-            case '70': keyXML = 'ICMS70'; break;
-            case '90': keyXML = 'ICMS90'; break;
-            default: throw new Error(`CST inválido: ${obj.CST}`);
+            case '00':
+                keyXML = 'ICMS00';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS00(obj);
+                break;
+            case '02':
+                keyXML = 'ICMS02';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS02(obj);
+                break;
+            case '10':
+                keyXML = 'ICMS10';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS10(obj);
+                break;
+            case '15':
+                keyXML = 'ICMS15';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS15(obj);
+                break;
+            case '20':
+                keyXML = 'ICMS20';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS20(obj);
+                break;
+            case '30':
+                keyXML = 'ICMS30';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS30(obj);
+                break;
+            case '40':
+            case '41':
+            case '50':
+                keyXML = 'ICMS40';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS40(obj);
+                break;
+            case '51':
+                keyXML = 'ICMS51';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS51(obj);
+                break;
+            case '53':
+                keyXML = 'ICMS53';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS53(obj);
+                break;
+            case '60':
+                keyXML = 'ICMS60';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS60(obj);
+                break;
+            case '61':
+                keyXML = 'ICMS61';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS61(obj);
+                break;
+            case '70':
+                keyXML = 'ICMS70';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS70(obj);
+                break;
+            case '90':
+                keyXML = 'ICMS90';
+                this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS90(obj);
+                break;
+            default:
+                throw new Error(`CST inválido: ${obj.CST}`);
         }
-
-        const icmsTag: Record<string, any> = {};
-        for (const key of Object.keys(obj)) {
-            if (!['orig', 'CST', 'modBC', 'modBCST', 'motDesICMS', 'motDesICMSST', 'cBenefRBC', 'indDeduzDeson', 'UFST'].includes(key)) {
-                icmsTag[key] = obj[key] == 0 ? "0.00" : obj[key];
-            } else {
-                icmsTag[key] = obj[key];
-            }
-        }
-
-        this.#NFe.infNFe.det[index].imposto.ICMS[keyXML] = icmsTag;
     }
 
 
@@ -820,6 +857,273 @@ class Make {
         }
 
         return vdigit.toString();
+    }
+
+    #conditionalNumberFormatting(number: Number, decimals = 2) {
+        if (number === null || number === undefined) {
+            return null;
+        }
+        return Number(number).toFixed(decimals);
+    }
+
+    #equalizeICMSParameters(obj: any) {
+        const possible = [
+            'orig', 'CST', 'modBC', 'vBC', 'pICMS', 'vICMS', 'pFCP', 'vFCP', 'vBCFCP',
+            'modBCST', 'pMVAST', 'pRedBCST', 'vBCST', 'pICMSST', 'vICMSST', 'vBCFCPST',
+            'pFCPST', 'vFCPST', 'vICMSDeson', 'motDesICMS', 'pRedBC', 'vICMSOp', 'pDif',
+            'vICMSDif', 'vBCSTRet', 'pST', 'vICMSSTRet', 'vBCFCPSTRet', 'pFCPSTRet',
+            'vFCPSTRet', 'pRedBCEfet', 'vBCEfet', 'pICMSEfet', 'vICMSEfet', 'vICMSSubstituto',
+            'vICMSSTDeson', 'motDesICMSST', 'pFCPDif', 'vFCPDif', 'vFCPEfet',
+            'pRedAdRem', 'motRedAdRem', 'qBCMono', 'adRemICMS', 'vICMSMono', 'vICMSMonoOp',
+            'adRemICMSReten', 'vICMSMonoReten', 'vICMSMonoDif', 'vICMSMonoRet', 'adRemICMSRet',
+            'cBenefRBC', 'indDeduzDeson'
+        ];
+
+        for (const key of possible) {
+            if (obj[key] === undefined) {
+                obj[key] = null;
+            }
+        }
+        return obj;
+    }
+
+    #addChildJS(obj: Record<string, any>, key: string, value: any, required: boolean) {
+        if (required || (value !== null && value !== undefined && value !== '')) {
+            obj[key] = value;
+        }
+    }
+
+    generateICMS00(obj: any): Record<string, any> {
+        const icms00: Record<string, any> = {};
+        this.#addChildJS(icms00, 'orig', obj.orig, true);
+        this.#addChildJS(icms00, 'CST', obj.CST, true);
+        this.#addChildJS(icms00, 'modBC', obj.modBC, true);
+        this.#addChildJS(icms00, 'vBC', this.#conditionalNumberFormatting(obj.vBC), true);
+        this.#addChildJS(icms00, 'pICMS', this.#conditionalNumberFormatting(obj.pICMS, 4), true);
+        this.#addChildJS(icms00, 'vICMS', this.#conditionalNumberFormatting(obj.vICMS), true);
+        this.#addChildJS(icms00, 'pFCP', this.#conditionalNumberFormatting(obj.pFCP, 4), false);
+        this.#addChildJS(icms00, 'vFCP', this.#conditionalNumberFormatting(obj.vFCP), false);
+        return icms00;
+    }
+
+    generateICMS02(obj: any): Record<string, any> {
+        const icms02: Record<string, any> = {};
+        this.#addChildJS(icms02, 'orig', obj.orig, true);
+        this.#addChildJS(icms02, 'CST', obj.CST, true);
+        this.#addChildJS(icms02, 'qBCMono', this.#conditionalNumberFormatting(obj.qBCMono, 4), false);
+        this.#addChildJS(icms02, 'adRemICMS', this.#conditionalNumberFormatting(obj.adRemICMS, 4), true);
+        this.#addChildJS(icms02, 'vICMSMono', this.#conditionalNumberFormatting(obj.vICMSMono), true);
+        return icms02;
+    }
+
+    generateICMS10(obj: any): Record<string, any> {
+        const icms10: Record<string, any> = {};
+        this.#addChildJS(icms10, 'orig', obj.orig, true);
+        this.#addChildJS(icms10, 'CST', obj.CST, true);
+        this.#addChildJS(icms10, 'modBC', obj.modBC, true);
+        this.#addChildJS(icms10, 'vBC', this.#conditionalNumberFormatting(obj.vBC), true);
+        this.#addChildJS(icms10, 'pICMS', this.#conditionalNumberFormatting(obj.pICMS, 4), true);
+        this.#addChildJS(icms10, 'vICMS', this.#conditionalNumberFormatting(obj.vICMS), true);
+        this.#addChildJS(icms10, 'modBCST', obj.modBCST, true);
+        this.#addChildJS(icms10, 'pMVAST', this.#conditionalNumberFormatting(obj.pMVAST, 4), false);
+        this.#addChildJS(icms10, 'pRedBCST', this.#conditionalNumberFormatting(obj.pRedBCST, 4), false);
+        this.#addChildJS(icms10, 'vBCST', this.#conditionalNumberFormatting(obj.vBCST), true);
+        this.#addChildJS(icms10, 'pICMSST', this.#conditionalNumberFormatting(obj.pICMSST, 4), true);
+        this.#addChildJS(icms10, 'vICMSST', this.#conditionalNumberFormatting(obj.vICMSST), true);
+        this.#addChildJS(icms10, 'vBCFCP', this.#conditionalNumberFormatting(obj.vBCFCP), false);
+        this.#addChildJS(icms10, 'pFCP', this.#conditionalNumberFormatting(obj.pFCP, 4), false);
+        this.#addChildJS(icms10, 'vFCP', this.#conditionalNumberFormatting(obj.vFCP), false);
+        this.#addChildJS(icms10, 'vBCFCPST', this.#conditionalNumberFormatting(obj.vBCFCPST), false);
+        this.#addChildJS(icms10, 'pFCPST', this.#conditionalNumberFormatting(obj.pFCPST, 4), false);
+        this.#addChildJS(icms10, 'vFCPST', this.#conditionalNumberFormatting(obj.vFCPST), false);
+        this.#addChildJS(icms10, 'vICMSSTDeson', this.#conditionalNumberFormatting(obj.vICMSSTDeson), false);
+        this.#addChildJS(icms10, 'motDesICMSST', obj.motDesICMSST, false);
+        return icms10;
+    }
+
+    generateICMS15(obj: any): Record<string, any> {
+        const icms15: Record<string, any> = {};
+        this.#addChildJS(icms15, 'orig', obj.orig, true);
+        this.#addChildJS(icms15, 'CST', obj.CST, true);
+        this.#addChildJS(icms15, 'qBCMono', this.#conditionalNumberFormatting(obj.qBCMono, 4), false);
+        this.#addChildJS(icms15, 'adRemICMS', this.#conditionalNumberFormatting(obj.adRemICMS, 4), true);
+        this.#addChildJS(icms15, 'vICMSMono', this.#conditionalNumberFormatting(obj.vICMSMono), true);
+        this.#addChildJS(icms15, 'qBCMonoReten', this.#conditionalNumberFormatting(obj.qBCMonoReten, 4), false);
+        this.#addChildJS(icms15, 'adRemICMSReten', this.#conditionalNumberFormatting(obj.adRemICMSReten, 4), true);
+        this.#addChildJS(icms15, 'vICMSMonoReten', this.#conditionalNumberFormatting(obj.vICMSMonoReten), true);
+        if (!obj.pRedAdRem) {
+            this.#addChildJS(icms15, 'pRedAdRem', this.#conditionalNumberFormatting(obj.pRedAdRem), true);
+            this.#addChildJS(icms15, 'motRedAdRem', obj.motRedAdRem, true);
+        }
+        return icms15;
+    }
+
+    generateICMS20(obj: any): Record<string, any> {
+        const icms20: Record<string, any> = {};
+        this.#addChildJS(icms20, 'orig', obj.orig, true);
+        this.#addChildJS(icms20, 'CST', obj.CST, true);
+        this.#addChildJS(icms20, 'modBC', obj.modBC, true);
+        this.#addChildJS(icms20, 'pRedBC', this.#conditionalNumberFormatting(obj.pRedBC, 4), true);
+        this.#addChildJS(icms20, 'vBC', this.#conditionalNumberFormatting(obj.vBC), true);
+        this.#addChildJS(icms20, 'pICMS', this.#conditionalNumberFormatting(obj.pICMS, 4), true);
+        this.#addChildJS(icms20, 'vICMS', this.#conditionalNumberFormatting(obj.vICMS), true);
+        this.#addChildJS(icms20, 'vBCFCP', this.#conditionalNumberFormatting(obj.vBCFCP), false);
+        this.#addChildJS(icms20, 'pFCP', this.#conditionalNumberFormatting(obj.pFCP, 4), false);
+        this.#addChildJS(icms20, 'vFCP', this.#conditionalNumberFormatting(obj.vFCP), false);
+        this.#addChildJS(icms20, 'vICMSDeson', this.#conditionalNumberFormatting(obj.vICMSDeson), false);
+        this.#addChildJS(icms20, 'motDesICMS', obj.motDesICMS, false);
+        this.#addChildJS(icms20, 'indDeduzDeson', obj.indDeduzDeson, false);
+        return icms20;
+    }
+
+    generateICMS30(obj: any): Record<string, any> {
+        const icms30: Record<string, any> = {};
+        this.#addChildJS(icms30, 'orig', obj.orig, true);
+        this.#addChildJS(icms30, 'CST', obj.CST, true);
+        this.#addChildJS(icms30, 'modBCST', obj.modBCST, true);
+        this.#addChildJS(icms30, 'pMVAST', this.#conditionalNumberFormatting(obj.pMVAST, 4), false);
+        this.#addChildJS(icms30, 'pRedBCST', this.#conditionalNumberFormatting(obj.pRedBCST, 4), false);
+        this.#addChildJS(icms30, 'vBCST', this.#conditionalNumberFormatting(obj.vBCST), true);
+        this.#addChildJS(icms30, 'pICMSST', this.#conditionalNumberFormatting(obj.pICMSST, 4), true);
+        this.#addChildJS(icms30, 'vICMSST', this.#conditionalNumberFormatting(obj.vICMSST), true);
+        this.#addChildJS(icms30, 'vBCFCPST', this.#conditionalNumberFormatting(obj.vBCFCPST), false);
+        this.#addChildJS(icms30, 'pFCPST', this.#conditionalNumberFormatting(obj.pFCPST, 4), false);
+        this.#addChildJS(icms30, 'vFCPST', this.#conditionalNumberFormatting(obj.vFCPST), false);
+        this.#addChildJS(icms30, 'vICMSDeson', this.#conditionalNumberFormatting(obj.vICMSDeson), false);
+        this.#addChildJS(icms30, 'motDesICMS', obj.motDesICMS, false);
+        this.#addChildJS(icms30, 'indDeduzDeson', obj.indDeduzDeson, false);
+        return icms30;
+    }
+
+    generateICMS40(obj: any): Record<string, any> {
+        const icms40: Record<string, any> = {};
+        this.#addChildJS(icms40, 'orig', obj.orig, true);
+        this.#addChildJS(icms40, 'CST', obj.CST, true);
+        this.#addChildJS(icms40, 'vICMSDeson', this.#conditionalNumberFormatting(obj.vICMSDeson), false);
+        this.#addChildJS(icms40, 'motDesICMS', obj.motDesICMS, false);
+        this.#addChildJS(icms40, 'indDeduzDeson', obj.indDeduzDeson, false);
+        return icms40;
+    }
+
+    generateICMS51(obj: any): Record<string, any> {
+        const icms51: Record<string, any> = {};
+        this.#addChildJS(icms51, 'orig', obj.orig, true);
+        this.#addChildJS(icms51, 'CST', obj.CST, true);
+        this.#addChildJS(icms51, 'modBC', obj.modBC, false);
+        this.#addChildJS(icms51, 'pRedBC', this.#conditionalNumberFormatting(obj.pRedBC, 4), false);
+        this.#addChildJS(icms51, 'cBenefRBC', obj.cBenefRBC, false);
+        this.#addChildJS(icms51, 'vBC', this.#conditionalNumberFormatting(obj.vBC), false);
+        this.#addChildJS(icms51, 'pICMS', this.#conditionalNumberFormatting(obj.pICMS, 4), false);
+        this.#addChildJS(icms51, 'vICMSOp', this.#conditionalNumberFormatting(obj.vICMSOp), false);
+        this.#addChildJS(icms51, 'pDif', this.#conditionalNumberFormatting(obj.pDif, 4), false);
+        this.#addChildJS(icms51, 'vICMSDif', this.#conditionalNumberFormatting(obj.vICMSDif), false);
+        this.#addChildJS(icms51, 'vICMS', this.#conditionalNumberFormatting(obj.vICMS), false);
+        this.#addChildJS(icms51, 'vBCFCP', this.#conditionalNumberFormatting(obj.vBCFCP), false);
+        this.#addChildJS(icms51, 'pFCP', this.#conditionalNumberFormatting(obj.pFCP, 4), false);
+        this.#addChildJS(icms51, 'vFCP', this.#conditionalNumberFormatting(obj.vFCP), false);
+        this.#addChildJS(icms51, 'pFCPDif', this.#conditionalNumberFormatting(obj.pFCPDif), false);
+        this.#addChildJS(icms51, 'vFCPDif', this.#conditionalNumberFormatting(obj.vFCPDif), false);
+        this.#addChildJS(icms51, 'vFCPEfet', this.#conditionalNumberFormatting(obj.vFCPEfet), false);
+        return icms51;
+    }
+
+    generateICMS53(obj: any): Record<string, any> {
+        const icms53: Record<string, any> = {};
+        this.#addChildJS(icms53, 'orig', obj.orig, true);
+        this.#addChildJS(icms53, 'CST', obj.CST, true);
+        this.#addChildJS(icms53, 'qBCMono', this.#conditionalNumberFormatting(obj.qBCMono, 4), false);
+        this.#addChildJS(icms53, 'adRemICMS', this.#conditionalNumberFormatting(obj.adRemICMS, 4), false);
+        this.#addChildJS(icms53, 'vICMSMonoOp', this.#conditionalNumberFormatting(obj.vICMSMonoOp), false);
+        this.#addChildJS(icms53, 'pDif', this.#conditionalNumberFormatting(obj.pDif, 4), false);
+        this.#addChildJS(icms53, 'vICMSMonoDif', this.#conditionalNumberFormatting(obj.vICMSMonoDif), false);
+        this.#addChildJS(icms53, 'vICMSMono', this.#conditionalNumberFormatting(obj.vICMSMono), false);
+        return icms53;
+    }
+
+    generateICMS60(obj: any): Record<string, any> {
+        const icms60: Record<string, any> = {};
+        this.#addChildJS(icms60, 'orig', obj.orig, true);
+        this.#addChildJS(icms60, 'CST', obj.CST, true);
+        this.#addChildJS(icms60, 'vBCSTRet', this.#conditionalNumberFormatting(obj.vBCSTRet), false);
+        this.#addChildJS(icms60, 'pST', this.#conditionalNumberFormatting(obj.pST, 4), false);
+        this.#addChildJS(icms60, 'vICMSSubstituto', this.#conditionalNumberFormatting(obj.vICMSSubstituto), false);
+        this.#addChildJS(icms60, 'vICMSSTRet', this.#conditionalNumberFormatting(obj.vICMSSTRet), false);
+        this.#addChildJS(icms60, 'vBCFCPSTRet', this.#conditionalNumberFormatting(obj.vBCFCPSTRet), false);
+        this.#addChildJS(icms60, 'pFCPSTRet', this.#conditionalNumberFormatting(obj.pFCPSTRet, 4), false);
+        this.#addChildJS(icms60, 'vFCPSTRet', this.#conditionalNumberFormatting(obj.vFCPSTRet), false);
+        this.#addChildJS(icms60, 'pRedBCEfet', this.#conditionalNumberFormatting(obj.pRedBCEfet, 4), false);
+        this.#addChildJS(icms60, 'vBCEfet', this.#conditionalNumberFormatting(obj.vBCEfet), false);
+        this.#addChildJS(icms60, 'pICMSEfet', this.#conditionalNumberFormatting(obj.pICMSEfet, 4), false);
+        this.#addChildJS(icms60, 'vICMSEfet', this.#conditionalNumberFormatting(obj.vICMSEfet), false);
+        return icms60;
+    }
+
+    generateICMS61(obj: any): Record<string, any> {
+        const icms61: Record<string, any> = {};
+        this.#addChildJS(icms61, 'orig', obj.orig, true);
+        this.#addChildJS(icms61, 'CST', obj.CST, true);
+        this.#addChildJS(icms61, 'qBCMonoRet', this.#conditionalNumberFormatting(obj.qBCMonoRet, 4), false);
+        this.#addChildJS(icms61, 'adRemICMSRet', this.#conditionalNumberFormatting(obj.adRemICMSRet, 4), true);
+        this.#addChildJS(icms61, 'vICMSMonoRet', this.#conditionalNumberFormatting(obj.vICMSMonoRet), true);
+        return icms61;
+    }
+
+    generateICMS70(obj: any): Record<string, any> {
+        const icms70: Record<string, any> = {};
+        this.#addChildJS(icms70, 'orig', obj.orig, true);
+        this.#addChildJS(icms70, 'CST', obj.CST, true);
+        this.#addChildJS(icms70, 'modBC', obj.modBC, true);
+        this.#addChildJS(icms70, 'pRedBC', this.#conditionalNumberFormatting(obj.pRedBC, 4), true);
+        this.#addChildJS(icms70, 'vBC', this.#conditionalNumberFormatting(obj.vBC), true);
+        this.#addChildJS(icms70, 'pICMS', this.#conditionalNumberFormatting(obj.pICMS, 4), true);
+        this.#addChildJS(icms70, 'vICMS', this.#conditionalNumberFormatting(obj.vICMS), true);
+        this.#addChildJS(icms70, 'vBCFCP', this.#conditionalNumberFormatting(obj.vBCFCP), false);
+        this.#addChildJS(icms70, 'pFCP', this.#conditionalNumberFormatting(obj.pFCP, 4), false);
+        this.#addChildJS(icms70, 'vFCP', obj.vFCP, false);
+        this.#addChildJS(icms70, 'modBCST', obj.modBCST, true);
+        this.#addChildJS(icms70, 'pMVAST', this.#conditionalNumberFormatting(obj.pMVAST, 4), false);
+        this.#addChildJS(icms70, 'pRedBCST', this.#conditionalNumberFormatting(obj.pRedBCST, 4), false);
+        this.#addChildJS(icms70, 'vBCST', this.#conditionalNumberFormatting(obj.vBCST), true);
+        this.#addChildJS(icms70, 'pICMSST', this.#conditionalNumberFormatting(obj.pICMSST, 4), true);
+        this.#addChildJS(icms70, 'vICMSST', this.#conditionalNumberFormatting(obj.vICMSST), true);
+        this.#addChildJS(icms70, 'vBCFCPST', this.#conditionalNumberFormatting(obj.vBCFCPST), false);
+        this.#addChildJS(icms70, 'pFCPST', this.#conditionalNumberFormatting(obj.pFCPST, 4), false);
+        this.#addChildJS(icms70, 'vFCPST', this.#conditionalNumberFormatting(obj.vFCPST), false);
+        this.#addChildJS(icms70, 'vICMSDeson', this.#conditionalNumberFormatting(obj.vICMSDeson), false);
+        this.#addChildJS(icms70, 'motDesICMS', obj.motDesICMS, false);
+        this.#addChildJS(icms70, 'indDeduzDeson', obj.indDeduzDeson, false);
+        this.#addChildJS(icms70, 'vICMSSTDeson', this.#conditionalNumberFormatting(obj.vICMSSTDeson), false);
+        this.#addChildJS(icms70, 'motDesICMSST', obj.motDesICMSST, false);
+        return icms70;
+    }
+
+    generateICMS90(obj: any): Record<string, any> {
+        const icms90: Record<string, any> = {};
+        this.#addChildJS(icms90, 'orig', obj.orig, true);
+        this.#addChildJS(icms90, 'CST', obj.CST, true);
+        this.#addChildJS(icms90, 'modBC', obj.modBC, false);
+        this.#addChildJS(icms90, 'vBC', this.#conditionalNumberFormatting(obj.vBC), false);
+        this.#addChildJS(icms90, 'pRedBC', this.#conditionalNumberFormatting(obj.pRedBC, 4), false);
+        this.#addChildJS(icms90, 'pICMS', this.#conditionalNumberFormatting(obj.pICMS, 4), false);
+        this.#addChildJS(icms90, 'vICMS', this.#conditionalNumberFormatting(obj.vICMS), false);
+        this.#addChildJS(icms90, 'vBCFCP', this.#conditionalNumberFormatting(obj.vBCFCP), false);
+        this.#addChildJS(icms90, 'pFCP', this.#conditionalNumberFormatting(obj.pFCP, 4), false);
+        this.#addChildJS(icms90, 'vFCP', this.#conditionalNumberFormatting(obj.vFCP), false);
+        this.#addChildJS(icms90, 'modBCST', obj.modBCST, false);
+        this.#addChildJS(icms90, 'pMVAST', this.#conditionalNumberFormatting(obj.pMVAST, 4), false);
+        this.#addChildJS(icms90, 'pRedBCST', this.#conditionalNumberFormatting(obj.pRedBCST, 4), false);
+        this.#addChildJS(icms90, 'vBCST', this.#conditionalNumberFormatting(obj.vBCST), false);
+        this.#addChildJS(icms90, 'pICMSST', this.#conditionalNumberFormatting(obj.pICMSST, 4), false);
+        this.#addChildJS(icms90, 'vICMSST', this.#conditionalNumberFormatting(obj.vICMSST), false);
+        this.#addChildJS(icms90, 'vBCFCPST', this.#conditionalNumberFormatting(obj.vBCFCPST), false);
+        this.#addChildJS(icms90, 'pFCPST', this.#conditionalNumberFormatting(obj.pFCPST, 4), false);
+        this.#addChildJS(icms90, 'vFCPST', this.#conditionalNumberFormatting(obj.vFCPST), false);
+        this.#addChildJS(icms90, 'vICMSDeson', this.#conditionalNumberFormatting(obj.vICMSDeson), false);
+        this.#addChildJS(icms90, 'motDesICMS', obj.motDesICMS, false);
+        this.#addChildJS(icms90, 'indDeduzDeson', obj.indDeduzDeson, false);
+        this.#addChildJS(icms90, 'vICMSSTDeson', this.#conditionalNumberFormatting(obj.vICMSSTDeson), false);
+        this.#addChildJS(icms90, 'motDesICMSST', obj.motDesICMSST, false);
+        return icms90;
     }
 
     xml() {

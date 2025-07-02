@@ -3,7 +3,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _Make_instances, _Make_NFe, _Make_ICMSTot, _Make_gerarChaveNFe, _Make_calcularDigitoVerificador, _Make_calICMSTot;
+var _Make_instances, _Make_NFe, _Make_ICMSTot, _Make_gerarChaveNFe, _Make_calcularDigitoVerificador, _Make_conditionalNumberFormatting, _Make_equalizeICMSParameters, _Make_addChildJS, _Make_calICMSTot;
 import { XMLBuilder } from "fast-xml-parser";
 import { urlEventos } from "./eventos.js";
 import { cUF2UF } from "./extras.js";
@@ -233,7 +233,7 @@ class Make {
     tagImposto() {
         throw "não implementado!";
     }
-    tagProdICMS(index, obj) {
+    tagProdICMS(index, data) {
         if (!__classPrivateFieldGet(this, _Make_NFe, "f")?.infNFe?.det?.[index]) {
             throw new Error(`Produto na posição ${index} não existe em infNFe.det`);
         }
@@ -243,49 +243,66 @@ class Make {
         if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS) {
             __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS = {};
         }
+        const obj = __classPrivateFieldGet(this, _Make_instances, "m", _Make_equalizeICMSParameters).call(this, data);
         let keyXML = "";
         switch (obj.CST) {
             case '00':
                 keyXML = 'ICMS00';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS00(obj);
+                break;
+            case '02':
+                keyXML = 'ICMS02';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS02(obj);
                 break;
             case '10':
                 keyXML = 'ICMS10';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS10(obj);
+                break;
+            case '15':
+                keyXML = 'ICMS15';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS15(obj);
                 break;
             case '20':
                 keyXML = 'ICMS20';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS20(obj);
                 break;
             case '30':
                 keyXML = 'ICMS30';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS30(obj);
                 break;
             case '40':
             case '41':
             case '50':
                 keyXML = 'ICMS40';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS40(obj);
                 break;
             case '51':
                 keyXML = 'ICMS51';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS51(obj);
+                break;
+            case '53':
+                keyXML = 'ICMS53';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS53(obj);
                 break;
             case '60':
                 keyXML = 'ICMS60';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS60(obj);
+                break;
+            case '61':
+                keyXML = 'ICMS61';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS61(obj);
                 break;
             case '70':
                 keyXML = 'ICMS70';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS70(obj);
                 break;
             case '90':
                 keyXML = 'ICMS90';
+                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = this.generateICMS90(obj);
                 break;
-            default: throw new Error(`CST inválido: ${obj.CST}`);
+            default:
+                throw new Error(`CST inválido: ${obj.CST}`);
         }
-        const icmsTag = {};
-        for (const key of Object.keys(obj)) {
-            if (!['orig', 'CST', 'modBC', 'modBCST', 'motDesICMS', 'motDesICMSST', 'cBenefRBC', 'indDeduzDeson', 'UFST'].includes(key)) {
-                icmsTag[key] = obj[key] == 0 ? "0.00" : obj[key];
-            }
-            else {
-                icmsTag[key] = obj[key];
-            }
-        }
-        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS[keyXML] = icmsTag;
     }
     tagProdICMSPart(index, obj) {
         if (__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS === undefined)
@@ -703,6 +720,226 @@ class Make {
     tagEntrega(obj) {
         throw "Ainda não configurado!";
     }
+    generateICMS00(obj) {
+        const icms00 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms00, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms00, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms00, 'modBC', obj.modBC, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms00, 'vBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBC), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms00, 'pICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pICMS, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms00, 'vICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMS), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms00, 'pFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pFCP, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms00, 'vFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vFCP), false);
+        return icms00;
+    }
+    generateICMS02(obj) {
+        const icms02 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms02, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms02, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms02, 'qBCMono', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.qBCMono, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms02, 'adRemICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.adRemICMS, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms02, 'vICMSMono', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSMono), true);
+        return icms02;
+    }
+    generateICMS10(obj) {
+        const icms10 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'modBC', obj.modBC, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'vBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBC), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'pICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pICMS, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'vICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMS), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'modBCST', obj.modBCST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'pMVAST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pMVAST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'pRedBCST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pRedBCST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'vBCST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCST), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'pICMSST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pICMSST, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'vICMSST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSST), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'vBCFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCFCP), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'pFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pFCP, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'vFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vFCP), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'vBCFCPST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCFCPST), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'pFCPST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pFCPST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'vFCPST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vFCPST), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'vICMSSTDeson', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSSTDeson), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms10, 'motDesICMSST', obj.motDesICMSST, false);
+        return icms10;
+    }
+    generateICMS15(obj) {
+        const icms15 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms15, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms15, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms15, 'qBCMono', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.qBCMono, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms15, 'adRemICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.adRemICMS, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms15, 'vICMSMono', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSMono), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms15, 'qBCMonoReten', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.qBCMonoReten, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms15, 'adRemICMSReten', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.adRemICMSReten, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms15, 'vICMSMonoReten', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSMonoReten), true);
+        if (!obj.pRedAdRem) {
+            __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms15, 'pRedAdRem', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pRedAdRem), true);
+            __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms15, 'motRedAdRem', obj.motRedAdRem, true);
+        }
+        return icms15;
+    }
+    generateICMS20(obj) {
+        const icms20 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'modBC', obj.modBC, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'pRedBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pRedBC, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'vBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBC), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'pICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pICMS, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'vICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMS), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'vBCFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCFCP), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'pFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pFCP, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'vFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vFCP), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'vICMSDeson', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSDeson), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'motDesICMS', obj.motDesICMS, false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms20, 'indDeduzDeson', obj.indDeduzDeson, false);
+        return icms20;
+    }
+    generateICMS30(obj) {
+        const icms30 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'modBCST', obj.modBCST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'pMVAST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pMVAST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'pRedBCST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pRedBCST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'vBCST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCST), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'pICMSST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pICMSST, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'vICMSST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSST), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'vBCFCPST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCFCPST), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'pFCPST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pFCPST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'vFCPST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vFCPST), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'vICMSDeson', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSDeson), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'motDesICMS', obj.motDesICMS, false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms30, 'indDeduzDeson', obj.indDeduzDeson, false);
+        return icms30;
+    }
+    generateICMS40(obj) {
+        const icms40 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms40, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms40, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms40, 'vICMSDeson', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSDeson), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms40, 'motDesICMS', obj.motDesICMS, false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms40, 'indDeduzDeson', obj.indDeduzDeson, false);
+        return icms40;
+    }
+    generateICMS51(obj) {
+        const icms51 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'modBC', obj.modBC, false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'pRedBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pRedBC, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'cBenefRBC', obj.cBenefRBC, false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'vBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBC), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'pICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pICMS, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'vICMSOp', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSOp), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'pDif', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pDif, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'vICMSDif', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSDif), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'vICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMS), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'vBCFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCFCP), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'pFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pFCP, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'vFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vFCP), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'pFCPDif', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pFCPDif), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'vFCPDif', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vFCPDif), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms51, 'vFCPEfet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vFCPEfet), false);
+        return icms51;
+    }
+    generateICMS53(obj) {
+        const icms53 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms53, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms53, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms53, 'qBCMono', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.qBCMono, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms53, 'adRemICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.adRemICMS, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms53, 'vICMSMonoOp', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSMonoOp), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms53, 'pDif', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pDif, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms53, 'vICMSMonoDif', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSMonoDif), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms53, 'vICMSMono', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSMono), false);
+        return icms53;
+    }
+    generateICMS60(obj) {
+        const icms60 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'vBCSTRet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCSTRet), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'pST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'vICMSSubstituto', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSSubstituto), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'vICMSSTRet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSSTRet), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'vBCFCPSTRet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCFCPSTRet), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'pFCPSTRet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pFCPSTRet, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'vFCPSTRet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vFCPSTRet), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'pRedBCEfet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pRedBCEfet, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'vBCEfet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCEfet), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'pICMSEfet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pICMSEfet, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms60, 'vICMSEfet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSEfet), false);
+        return icms60;
+    }
+    generateICMS61(obj) {
+        const icms61 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms61, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms61, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms61, 'qBCMonoRet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.qBCMonoRet, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms61, 'adRemICMSRet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.adRemICMSRet, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms61, 'vICMSMonoRet', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSMonoRet), true);
+        return icms61;
+    }
+    generateICMS70(obj) {
+        const icms70 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'modBC', obj.modBC, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'pRedBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pRedBC, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'vBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBC), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'pICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pICMS, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'vICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMS), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'vBCFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCFCP), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'pFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pFCP, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'vFCP', obj.vFCP, false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'modBCST', obj.modBCST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'pMVAST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pMVAST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'pRedBCST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pRedBCST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'vBCST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCST), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'pICMSST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pICMSST, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'vICMSST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSST), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'vBCFCPST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCFCPST), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'pFCPST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pFCPST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'vFCPST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vFCPST), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'vICMSDeson', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSDeson), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'motDesICMS', obj.motDesICMS, false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'indDeduzDeson', obj.indDeduzDeson, false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'vICMSSTDeson', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSSTDeson), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms70, 'motDesICMSST', obj.motDesICMSST, false);
+        return icms70;
+    }
+    generateICMS90(obj) {
+        const icms90 = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'orig', obj.orig, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'modBC', obj.modBC, false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'vBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBC), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'pRedBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pRedBC, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'pICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pICMS, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'vICMS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMS), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'vBCFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCFCP), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'pFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pFCP, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'vFCP', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vFCP), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'modBCST', obj.modBCST, false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'pMVAST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pMVAST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'pRedBCST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pRedBCST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'vBCST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCST), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'pICMSST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pICMSST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'vICMSST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSST), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'vBCFCPST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBCFCPST), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'pFCPST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pFCPST, 4), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'vFCPST', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vFCPST), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'vICMSDeson', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSDeson), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'motDesICMS', obj.motDesICMS, false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'indDeduzDeson', obj.indDeduzDeson, false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'vICMSSTDeson', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vICMSSTDeson), false);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, icms90, 'motDesICMSST', obj.motDesICMSST, false);
+        return icms90;
+    }
     xml() {
         if (__classPrivateFieldGet(this, _Make_NFe, "f").infNFe[`@Id`] == null)
             __classPrivateFieldGet(this, _Make_NFe, "f").infNFe[`@Id`] = `NFe${__classPrivateFieldGet(this, _Make_instances, "m", _Make_gerarChaveNFe).call(this)}`;
@@ -752,6 +989,33 @@ _Make_NFe = new WeakMap(), _Make_ICMSTot = new WeakMap(), _Make_instances = new 
         vdigit = 0;
     }
     return vdigit.toString();
+}, _Make_conditionalNumberFormatting = function _Make_conditionalNumberFormatting(number, decimals = 2) {
+    if (number === null || number === undefined) {
+        return null;
+    }
+    return Number(number).toFixed(decimals);
+}, _Make_equalizeICMSParameters = function _Make_equalizeICMSParameters(obj) {
+    const possible = [
+        'orig', 'CST', 'modBC', 'vBC', 'pICMS', 'vICMS', 'pFCP', 'vFCP', 'vBCFCP',
+        'modBCST', 'pMVAST', 'pRedBCST', 'vBCST', 'pICMSST', 'vICMSST', 'vBCFCPST',
+        'pFCPST', 'vFCPST', 'vICMSDeson', 'motDesICMS', 'pRedBC', 'vICMSOp', 'pDif',
+        'vICMSDif', 'vBCSTRet', 'pST', 'vICMSSTRet', 'vBCFCPSTRet', 'pFCPSTRet',
+        'vFCPSTRet', 'pRedBCEfet', 'vBCEfet', 'pICMSEfet', 'vICMSEfet', 'vICMSSubstituto',
+        'vICMSSTDeson', 'motDesICMSST', 'pFCPDif', 'vFCPDif', 'vFCPEfet',
+        'pRedAdRem', 'motRedAdRem', 'qBCMono', 'adRemICMS', 'vICMSMono', 'vICMSMonoOp',
+        'adRemICMSReten', 'vICMSMonoReten', 'vICMSMonoDif', 'vICMSMonoRet', 'adRemICMSRet',
+        'cBenefRBC', 'indDeduzDeson'
+    ];
+    for (const key of possible) {
+        if (obj[key] === undefined) {
+            obj[key] = null;
+        }
+    }
+    return obj;
+}, _Make_addChildJS = function _Make_addChildJS(obj, key, value, required) {
+    if (required || (value !== null && value !== undefined && value !== '')) {
+        obj[key] = value;
+    }
 }, _Make_calICMSTot = function _Make_calICMSTot(obj) {
     Object.keys(obj).map(key => {
         if (__classPrivateFieldGet(this, _Make_ICMSTot, "f")[key] !== undefined) {

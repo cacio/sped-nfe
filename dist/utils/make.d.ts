@@ -31,7 +31,7 @@ declare class Make {
     tagEncerrante(): void;
     tagOrigComb(): void;
     tagImposto(): void;
-    tagProdICMS(index: number, obj: any): void;
+    tagProdICMS(index: number, data: any): void;
     tagProdICMSPart(index: number, obj: any): void;
     tagProdICMSST(index: number, obj: any): void;
     tagProdICMSSN(index: number, obj: any): void;
@@ -74,6 +74,19 @@ declare class Make {
     tagInfRespTec(obj: any): void;
     tagRetiEnder(obj: any): void;
     tagEntrega(obj: any): void;
+    generateICMS00(obj: any): Record<string, any>;
+    generateICMS02(obj: any): Record<string, any>;
+    generateICMS10(obj: any): Record<string, any>;
+    generateICMS15(obj: any): Record<string, any>;
+    generateICMS20(obj: any): Record<string, any>;
+    generateICMS30(obj: any): Record<string, any>;
+    generateICMS40(obj: any): Record<string, any>;
+    generateICMS51(obj: any): Record<string, any>;
+    generateICMS53(obj: any): Record<string, any>;
+    generateICMS60(obj: any): Record<string, any>;
+    generateICMS61(obj: any): Record<string, any>;
+    generateICMS70(obj: any): Record<string, any>;
+    generateICMS90(obj: any): Record<string, any>;
     xml(): any;
 }
 export { Make };
