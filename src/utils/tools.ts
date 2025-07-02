@@ -64,57 +64,71 @@ class Tools {
 
     sefazEnviaLote(xml: string, data: any = { idLote: 1, indSinc: 0, compactar: false }): Promise<string> {
         return new Promise(async (resolve, reject) => {
-            if (typeof data.idLote == "undefined") data.idLote = 1;
-            if (typeof data.indSinc == "undefined") data.indSinc = 0;
-            if (typeof data.compactar == "undefined") data.compactar = false;
+            try {
+                if (typeof data.idLote == "undefined") data.idLote = 1;
+                if (typeof data.indSinc == "undefined") data.indSinc = 0;
+                if (typeof data.compactar == "undefined") data.compactar = false;
 
-            await this.#certTools();
-            let jsonXmlLote = {
-                "soap:Envelope": {
-                    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-                    "@xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
-                    "@xmlns:soap": "http://www.w3.org/2003/05/soap-envelope",
-                    "soap:Body": {
-                        "nfeDadosMsg": {
-                            "@xmlns": "http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4",
-                            "enviNFe": {
-                                ...{
-                                    "@xmlns": "http://www.portalfiscal.inf.br/nfe",
-                                    "@versao": "4.00",
-                                    "idLote": data.idLote,
-                                    "indSinc": data.indSinc,
-                                },
-                                ...(await this.xml2json(xml))
+                await this.#certTools();
+
+                const jsonXmlLote = {
+                    "soap:Envelope": {
+                        "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+                        "@xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
+                        "@xmlns:soap": "http://www.w3.org/2003/05/soap-envelope",
+                        "soap:Body": {
+                            "nfeDadosMsg": {
+                                "@xmlns": "http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4",
+                                "enviNFe": {
+                                    ...{
+                                        "@xmlns": "http://www.portalfiscal.inf.br/nfe",
+                                        "@versao": "4.00",
+                                        "idLote": data.idLote,
+                                        "indSinc": data.indSinc,
+                                    },
+                                    ...(await this.xml2json(xml))
+                                }
                             }
                         }
-                    }
-                },
-            }
-            let xmlLote = await this.json2xml(jsonXmlLote);
-            try {
-                let tempUF = urlEventos(this.#config.UF, this.#config.versao);
-                const req = https.request(tempUF[`mod${this.#config.mod}`][(this.#config.tpAmb == 1 ? "producao" : "homologacao")].NFeAutorizacao, {
-                    ...{
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/soap+xml; charset=utf-8',
-                            'Content-Length': xmlLote.length,
-                        },
-                        rejectUnauthorized: false
                     },
+                };
+
+                const xmlLote = await this.json2xml(jsonXmlLote);
+
+                console.log('\n📤 XML do Lote enviado:\n', xmlLote);
+
+                const tempUF = urlEventos(this.#config.UF, this.#config.versao);
+                const endpoint = tempUF[`mod${this.#config.mod}`][(this.#config.tpAmb == 1 ? "producao" : "homologacao")].NFeAutorizacao;
+
+                const req = https.request(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/soap+xml; charset=utf-8',
+                        'Content-Length': Buffer.byteLength(xmlLote),
+                    },
+                    rejectUnauthorized: false,
                     ...await this.#certTools()
                 }, (res) => {
-                    let data = '';
+                    let responseData = '';
 
                     res.on('data', (chunk) => {
-                        data += chunk;
+                        responseData += chunk;
                     });
 
                     res.on('end', async () => {
+                        console.log('\n📥 XML de resposta da SEFAZ:\n', responseData);
+
                         try {
-                            resolve(await this.#limparSoap(data));
+                            const soapLimpo = await this.#limparSoap(responseData);
+
+                            if (soapLimpo.includes('<faultcode>') || soapLimpo.includes('<soap:Fault>')) {
+                                console.warn('⚠️ SOAP Fault detectado na resposta!');
+                            }
+
+                            resolve(soapLimpo);
                         } catch (error) {
-                            resolve(data)
+                            console.warn('⚠️ Erro ao limpar o SOAP. Retornando conteúdo bruto.');
+                            resolve(responseData);
                         }
                     });
                 });
@@ -122,19 +136,23 @@ class Tools {
                 req.setTimeout(this.#config.timeout * 1000, () => {
                     reject({
                         name: 'TimeoutError',
-                        message: 'The operation was aborted due to timeout'
+                        message: 'A operação foi abortada por timeout da requisição à SEFAZ.'
                     });
-                    req.destroy(); // cancela a requisição
+                    req.destroy(); // Cancela a requisição
                 });
+
                 req.on('error', (erro) => {
+                    console.error('\n❌ Erro na requisição à SEFAZ:\n', erro);
                     reject(erro);
                 });
+
                 req.write(xmlLote);
                 req.end();
             } catch (erro) {
+                console.error('\n❌ Erro inesperado na preparação ou envio do lote:\n', erro);
                 reject(erro);
             }
-        })
+        });
     }
 
     async xmlSign(xmlJSON: string, data: any = { tag: "infNFe" }): Promise<string> {
@@ -229,7 +247,7 @@ class Tools {
         })
     }
 
-    //Obter certificado 
+    //Obter certificado
     async getCertificado(): Promise<object> {
         return new Promise(async (resvol, reject) => {
             this.#certTools().then(resvol).catch(reject)
@@ -399,7 +417,7 @@ class Tools {
                 let xmlSing = await json2xml(evento);
                 xmlSing = await this.xmlSign(xmlSing, { tag: "infEvento" }); //Assinado
                 await this.#xmlValido(xmlSing, `envEvento_v1.00`).catch(reject); //Validar corpo
-                
+
                 xmlSing = await json2xml({
                     "soap:Envelope": {
                         "@xmlns:soap": "http://www.w3.org/2003/05/soap-envelope",
@@ -708,7 +726,7 @@ class Tools {
 
     //Remove coisas inuteis da resposta do sefaz
     async #limparSoap(xml: string) {
-        if(xml=="Bad Request") throw xml
+        if (xml == "Bad Request") throw xml
         const clear: any = [
             'S:Envelope',
             'S:Body',

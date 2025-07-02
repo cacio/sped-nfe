@@ -55,75 +55,83 @@ class Tools {
     }
     sefazEnviaLote(xml, data = { idLote: 1, indSinc: 0, compactar: false }) {
         return new Promise(async (resolve, reject) => {
-            if (typeof data.idLote == "undefined")
-                data.idLote = 1;
-            if (typeof data.indSinc == "undefined")
-                data.indSinc = 0;
-            if (typeof data.compactar == "undefined")
-                data.compactar = false;
-            await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_certTools).call(this);
-            let jsonXmlLote = {
-                "soap:Envelope": {
-                    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-                    "@xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
-                    "@xmlns:soap": "http://www.w3.org/2003/05/soap-envelope",
-                    "soap:Body": {
-                        "nfeDadosMsg": {
-                            "@xmlns": "http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4",
-                            "enviNFe": {
-                                ...{
-                                    "@xmlns": "http://www.portalfiscal.inf.br/nfe",
-                                    "@versao": "4.00",
-                                    "idLote": data.idLote,
-                                    "indSinc": data.indSinc,
-                                },
-                                ...(await this.xml2json(xml))
+            try {
+                if (typeof data.idLote == "undefined")
+                    data.idLote = 1;
+                if (typeof data.indSinc == "undefined")
+                    data.indSinc = 0;
+                if (typeof data.compactar == "undefined")
+                    data.compactar = false;
+                await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_certTools).call(this);
+                const jsonXmlLote = {
+                    "soap:Envelope": {
+                        "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+                        "@xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
+                        "@xmlns:soap": "http://www.w3.org/2003/05/soap-envelope",
+                        "soap:Body": {
+                            "nfeDadosMsg": {
+                                "@xmlns": "http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4",
+                                "enviNFe": {
+                                    ...{
+                                        "@xmlns": "http://www.portalfiscal.inf.br/nfe",
+                                        "@versao": "4.00",
+                                        "idLote": data.idLote,
+                                        "indSinc": data.indSinc,
+                                    },
+                                    ...(await this.xml2json(xml))
+                                }
                             }
                         }
-                    }
-                },
-            };
-            let xmlLote = await this.json2xml(jsonXmlLote);
-            try {
-                let tempUF = urlEventos(__classPrivateFieldGet(this, _Tools_config, "f").UF, __classPrivateFieldGet(this, _Tools_config, "f").versao);
-                const req = https.request(tempUF[`mod${__classPrivateFieldGet(this, _Tools_config, "f").mod}`][(__classPrivateFieldGet(this, _Tools_config, "f").tpAmb == 1 ? "producao" : "homologacao")].NFeAutorizacao, {
-                    ...{
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/soap+xml; charset=utf-8',
-                            'Content-Length': xmlLote.length,
-                        },
-                        rejectUnauthorized: false
                     },
+                };
+                const xmlLote = await this.json2xml(jsonXmlLote);
+                console.log('\n📤 XML do Lote enviado:\n', xmlLote);
+                const tempUF = urlEventos(__classPrivateFieldGet(this, _Tools_config, "f").UF, __classPrivateFieldGet(this, _Tools_config, "f").versao);
+                const endpoint = tempUF[`mod${__classPrivateFieldGet(this, _Tools_config, "f").mod}`][(__classPrivateFieldGet(this, _Tools_config, "f").tpAmb == 1 ? "producao" : "homologacao")].NFeAutorizacao;
+                const req = https.request(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/soap+xml; charset=utf-8',
+                        'Content-Length': Buffer.byteLength(xmlLote),
+                    },
+                    rejectUnauthorized: false,
                     ...await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_certTools).call(this)
                 }, (res) => {
-                    let data = '';
+                    let responseData = '';
                     res.on('data', (chunk) => {
-                        data += chunk;
+                        responseData += chunk;
                     });
                     res.on('end', async () => {
+                        console.log('\n📥 XML de resposta da SEFAZ:\n', responseData);
                         try {
-                            resolve(await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_limparSoap).call(this, data));
+                            const soapLimpo = await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_limparSoap).call(this, responseData);
+                            if (soapLimpo.includes('<faultcode>') || soapLimpo.includes('<soap:Fault>')) {
+                                console.warn('⚠️ SOAP Fault detectado na resposta!');
+                            }
+                            resolve(soapLimpo);
                         }
                         catch (error) {
-                            resolve(data);
+                            console.warn('⚠️ Erro ao limpar o SOAP. Retornando conteúdo bruto.');
+                            resolve(responseData);
                         }
                     });
                 });
                 req.setTimeout(__classPrivateFieldGet(this, _Tools_config, "f").timeout * 1000, () => {
                     reject({
                         name: 'TimeoutError',
-                        message: 'The operation was aborted due to timeout'
+                        message: 'A operação foi abortada por timeout da requisição à SEFAZ.'
                     });
-                    req.destroy(); // cancela a requisição
+                    req.destroy(); // Cancela a requisição
                 });
                 req.on('error', (erro) => {
+                    console.error('\n❌ Erro na requisição à SEFAZ:\n', erro);
                     reject(erro);
                 });
                 req.write(xmlLote);
                 req.end();
             }
             catch (erro) {
+                console.error('\n❌ Erro inesperado na preparação ou envio do lote:\n', erro);
                 reject(erro);
             }
         });
@@ -162,7 +170,7 @@ class Tools {
             json2xml(obj).then(resvol).catch(reject);
         });
     }
-    //Obter certificado 
+    //Obter certificado
     async getCertificado() {
         return new Promise(async (resvol, reject) => {
             __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_certTools).call(this).then(resvol).catch(reject);
