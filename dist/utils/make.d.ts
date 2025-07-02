@@ -38,9 +38,9 @@ declare class Make {
     tagProdICMSUFDest(index: number, obj: any): void;
     tagProdIPI(index: number, data: any): void;
     tagProdII(index: number, obj: any): void;
-    tagProdPIS(index: number, obj: any): void;
+    tagProdPIS(index: number, data: any): void;
     tagProdPISST(index: number, obj: any): void;
-    tagProdCOFINS(index: number, obj: any): void;
+    tagProdCOFINS(index: number, data: any): void;
     tagProdCOFINSST(index: number, obj: any): void;
     tagProdISSQN(index: number, obj: any): void;
     tagProdImpostoDevol(index: number, obj: any): void;
@@ -90,6 +90,15 @@ declare class Make {
     equalizeIPIParameters(obj: any): any;
     generateIPITrib(obj: any): Record<string, any>;
     generateIPINT(obj: any): Record<string, any>;
+    generatePISAliq(obj: any): Record<string, any>;
+    generatePISQtde(obj: any): Record<string, any>;
+    generatePISNT(obj: any): Record<string, any>;
+    generatePISOutr(obj: any): Record<string, any>;
+    equalizeCOFINSParameters(obj: any): any;
+    generateCOFINSAliq(obj: any): Record<string, any>;
+    generateCOFINSQtde(obj: any): Record<string, any>;
+    generateCOFINSNT(obj: any): Record<string, any>;
+    generateCOFINSOutr(obj: any): Record<string, any>;
     xml(): any;
 }
 export { Make };

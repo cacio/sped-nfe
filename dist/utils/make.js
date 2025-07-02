@@ -3,7 +3,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _Make_instances, _Make_NFe, _Make_ICMSTot, _Make_gerarChaveNFe, _Make_calcularDigitoVerificador, _Make_conditionalNumberFormatting, _Make_equalizeICMSParameters, _Make_addChildJS, _Make_calICMSTot;
+var _Make_instances, _Make_NFe, _Make_ICMSTot, _Make_gerarChaveNFe, _Make_calcularDigitoVerificador, _Make_conditionalNumberFormatting, _Make_equalizeICMSParameters, _Make_addChildJS, _Make_equalizePISParameters, _Make_calICMSTot;
 import { XMLBuilder } from "fast-xml-parser";
 import { urlEventos } from "./eventos.js";
 import { cUF2UF } from "./extras.js";
@@ -444,17 +444,28 @@ class Make {
         });
         __classPrivateFieldGet(this, _Make_instances, "m", _Make_calICMSTot).call(this, obj);
     }
-    tagProdPIS(index, obj) {
-        if (__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.PIS === undefined)
+    tagProdPIS(index, data) {
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f")?.infNFe?.det?.[index]) {
+            throw new Error(`Produto na posição ${index} não existe em infNFe.det`);
+        }
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto) {
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto = {};
+        }
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.PIS) {
             __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.PIS = {};
+        }
+        const obj = __classPrivateFieldGet(this, _Make_instances, "m", _Make_equalizePISParameters).call(this, data);
         let keyXML = "";
+        let pisItem = {};
         switch (obj.CST) {
             case '01':
             case '02':
                 keyXML = 'PISAliq';
+                pisItem = this.generatePISAliq(obj);
                 break;
             case '03':
                 keyXML = 'PISQtde';
+                pisItem = this.generatePISQtde(obj);
                 break;
             case '04':
             case '05':
@@ -463,6 +474,7 @@ class Make {
             case '08':
             case '09':
                 keyXML = 'PISNT';
+                pisItem = this.generatePISNT(obj);
                 break;
             case '49':
             case '50':
@@ -489,15 +501,12 @@ class Make {
             case '98':
             case '99':
                 keyXML = 'PISOutr';
+                pisItem = this.generatePISOutr(obj);
                 break;
             default:
-                throw "CSOSN não identificado!";
-                break;
+                throw new Error("CST de PIS não identificado!");
         }
-        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.PIS[keyXML] = {};
-        Object.keys(obj).forEach(key => {
-            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.PIS[keyXML][key] = obj[key];
-        });
+        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.PIS[keyXML] = pisItem;
         //Calcular ICMSTot
         __classPrivateFieldGet(this, _Make_instances, "m", _Make_calICMSTot).call(this, obj);
     }
@@ -511,17 +520,28 @@ class Make {
         //Calcular ICMSTot
         __classPrivateFieldGet(this, _Make_instances, "m", _Make_calICMSTot).call(this, obj);
     }
-    tagProdCOFINS(index, obj) {
-        if (__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.COFINS === undefined)
+    tagProdCOFINS(index, data) {
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f")?.infNFe?.det?.[index]) {
+            throw new Error(`Produto na posição ${index} não existe em infNFe.det`);
+        }
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto) {
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto = {};
+        }
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.COFINS) {
             __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.COFINS = {};
-        let keyXML = null;
+        }
+        const obj = this.equalizeCOFINSParameters(data);
+        let keyXML = "";
+        let confinsItem = {};
         switch (obj.CST) {
             case '01':
             case '02':
-                keyXML = null;
+                keyXML = 'COFINSAliq';
+                confinsItem = this.generateCOFINSAliq(obj);
                 break;
             case '03':
-                keyXML = "COFINSQtde";
+                keyXML = 'COFINSQtde';
+                confinsItem = this.generateCOFINSQtde(obj);
                 break;
             case '04':
             case '05':
@@ -529,7 +549,8 @@ class Make {
             case '07':
             case '08':
             case '09':
-                keyXML = "COFINSNT";
+                keyXML = 'COFINSNT';
+                confinsItem = this.generateCOFINSNT(obj);
                 break;
             case '49':
             case '50':
@@ -555,20 +576,13 @@ class Make {
             case '75':
             case '98':
             case '99':
-                keyXML = "COFINSOutr";
+                keyXML = 'COFINSOutr';
+                confinsItem = this.generateCOFINSOutr(obj);
                 break;
+            default:
+                throw new Error("CST de COFINS não identificado!");
         }
-        if (keyXML == null) {
-            Object.keys(obj).forEach(key => {
-                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.COFINS[key] = obj[key];
-            });
-        }
-        else {
-            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.COFINS[keyXML] = {};
-            Object.keys(obj).forEach(key => {
-                __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.COFINS[keyXML][key] = obj[key];
-            });
-        }
+        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.COFINS[keyXML] = confinsItem;
         //Calcular ICMSTot
         __classPrivateFieldGet(this, _Make_instances, "m", _Make_calICMSTot).call(this, obj);
     }
@@ -995,6 +1009,93 @@ class Make {
         __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, ipiNT, 'CST', obj.CST, true);
         return ipiNT;
     }
+    generatePISAliq(obj) {
+        const pisAliq = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisAliq, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisAliq, 'vBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBC), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisAliq, 'pPIS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pPIS, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisAliq, 'vPIS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vPIS), true);
+        return pisAliq;
+    }
+    generatePISQtde(obj) {
+        const pisQtde = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisQtde, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisQtde, 'qBCProd', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.qBCProd, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisQtde, 'vAliqProd', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vAliqProd, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisQtde, 'vPIS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vPIS), true);
+        return pisQtde;
+    }
+    generatePISNT(obj) {
+        const pisNT = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisNT, 'CST', obj.CST, true);
+        return pisNT;
+    }
+    generatePISOutr(obj) {
+        const pisOutr = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisOutr, 'CST', obj.CST, true);
+        if (obj.qBCProd === null || obj.qBCProd === undefined) {
+            __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisOutr, 'vBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBC), obj.vBC !== null && obj.vBC !== undefined);
+            __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisOutr, 'pPIS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pPIS, 4), obj.pPIS !== null && obj.pPIS !== undefined);
+        }
+        else {
+            __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisOutr, 'qBCProd', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.qBCProd, 4), obj.qBCProd !== null && obj.qBCProd !== undefined);
+            __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisOutr, 'vAliqProd', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vAliqProd, 4), obj.vAliqProd !== null && obj.vAliqProd !== undefined);
+        }
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, pisOutr, 'vPIS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vPIS), obj.vPIS !== null && obj.vPIS !== undefined);
+        return pisOutr;
+    }
+    equalizeCOFINSParameters(obj) {
+        const possible = [
+            'item',
+            'CST',
+            'vBC',
+            'pCOFINS',
+            'vCOFINS',
+            'qBCProd',
+            'vAliqProd'
+        ];
+        for (const key of possible) {
+            if (obj[key] === undefined) {
+                obj[key] = null;
+            }
+        }
+        return obj;
+    }
+    generateCOFINSAliq(obj) {
+        const confinsAliq = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsAliq, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsAliq, 'vBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBC), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsAliq, 'pCOFINS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pCOFINS, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsAliq, 'vCOFINS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vCOFINS), true);
+        return confinsAliq;
+    }
+    generateCOFINSQtde(obj) {
+        const confinsQtde = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsQtde, 'CST', obj.CST, true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsQtde, 'qBCProd', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.qBCProd, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsQtde, 'vAliqProd', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vAliqProd, 4), true);
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsQtde, 'vCOFINS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vCOFINS), true);
+        return confinsQtde;
+    }
+    generateCOFINSNT(obj) {
+        const confinsNT = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsNT, 'CST', obj.CST, true);
+        return confinsNT;
+    }
+    generateCOFINSOutr(obj) {
+        const confinsOutr = {};
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsOutr, 'CST', obj.CST, true);
+        if (obj.qBCProd === null || obj.qBCProd === undefined) {
+            __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsOutr, 'vBC', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vBC), obj.vBC !== null && obj.vBC !== undefined);
+            __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsOutr, 'pCOFINS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.pCOFINS, 4), obj.pCOFINS !== null && obj.pCOFINS !== undefined);
+        }
+        else {
+            __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsOutr, 'qBCProd', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.qBCProd, 4), obj.qBCProd !== null && obj.qBCProd !== undefined);
+            __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsOutr, 'vAliqProd', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vAliqProd, 4), obj.vAliqProd !== null && obj.vAliqProd !== undefined);
+        }
+        __classPrivateFieldGet(this, _Make_instances, "m", _Make_addChildJS).call(this, confinsOutr, 'vCOFINS', __classPrivateFieldGet(this, _Make_instances, "m", _Make_conditionalNumberFormatting).call(this, obj.vCOFINS), obj.vCOFINS !== null && obj.vCOFINS !== undefined);
+        return confinsOutr;
+    }
     xml() {
         if (__classPrivateFieldGet(this, _Make_NFe, "f").infNFe[`@Id`] == null)
             __classPrivateFieldGet(this, _Make_NFe, "f").infNFe[`@Id`] = `NFe${__classPrivateFieldGet(this, _Make_instances, "m", _Make_gerarChaveNFe).call(this)}`;
@@ -1071,6 +1172,22 @@ _Make_NFe = new WeakMap(), _Make_ICMSTot = new WeakMap(), _Make_instances = new 
     if (required || (value !== null && value !== undefined && value !== '')) {
         obj[key] = value;
     }
+}, _Make_equalizePISParameters = function _Make_equalizePISParameters(obj) {
+    const possible = [
+        'item',
+        'CST',
+        'vBC',
+        'pPIS',
+        'vPIS',
+        'qBCProd',
+        'vAliqProd'
+    ];
+    for (const key of possible) {
+        if (obj[key] === undefined) {
+            obj[key] = null;
+        }
+    }
+    return obj;
 }, _Make_calICMSTot = function _Make_calICMSTot(obj) {
     Object.keys(obj).map(key => {
         if (__classPrivateFieldGet(this, _Make_ICMSTot, "f")[key] !== undefined) {

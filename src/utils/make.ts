@@ -497,17 +497,33 @@ class Make {
         this.#calICMSTot(obj);
     }
 
-    tagProdPIS(index: number, obj: any) {
-        if (this.#NFe.infNFe.det[index].imposto.PIS === undefined) this.#NFe.infNFe.det[index].imposto.PIS = {};
+    tagProdPIS(index: number, data: any) {
+        if (!this.#NFe?.infNFe?.det?.[index]) {
+            throw new Error(`Produto na posição ${index} não existe em infNFe.det`);
+        }
+
+        if (!this.#NFe.infNFe.det[index].imposto) {
+            this.#NFe.infNFe.det[index].imposto = {};
+        }
+
+        if (!this.#NFe.infNFe.det[index].imposto.PIS) {
+            this.#NFe.infNFe.det[index].imposto.PIS = {};
+        }
+
+        const obj = this.#equalizePISParameters(data);
 
         let keyXML = "";
+        let pisItem: Record<string, any> = {};
+
         switch (obj.CST) {
             case '01':
             case '02':
                 keyXML = 'PISAliq';
+                pisItem = this.generatePISAliq(obj);
                 break;
             case '03':
                 keyXML = 'PISQtde';
+                pisItem = this.generatePISQtde(obj);
                 break;
             case '04':
             case '05':
@@ -516,6 +532,7 @@ class Make {
             case '08':
             case '09':
                 keyXML = 'PISNT';
+                pisItem = this.generatePISNT(obj);
                 break;
             case '49':
             case '50':
@@ -542,16 +559,13 @@ class Make {
             case '98':
             case '99':
                 keyXML = 'PISOutr';
+                pisItem = this.generatePISOutr(obj);
                 break;
             default:
-                throw "CSOSN não identificado!";
-                break;
-
+                throw new Error("CST de PIS não identificado!");
         }
-        this.#NFe.infNFe.det[index].imposto.PIS[keyXML] = {};
-        Object.keys(obj).forEach(key => {
-            this.#NFe.infNFe.det[index].imposto.PIS[keyXML][key] = obj[key];
-        });
+
+        this.#NFe.infNFe.det[index].imposto.PIS[keyXML] = pisItem;
 
         //Calcular ICMSTot
         this.#calICMSTot(obj);
@@ -570,17 +584,33 @@ class Make {
         this.#calICMSTot(obj);
     }
 
-    tagProdCOFINS(index: number, obj: any) {
-        if (this.#NFe.infNFe.det[index].imposto.COFINS === undefined) this.#NFe.infNFe.det[index].imposto.COFINS = {};
+    tagProdCOFINS(index: number, data: any) {
+        if (!this.#NFe?.infNFe?.det?.[index]) {
+            throw new Error(`Produto na posição ${index} não existe em infNFe.det`);
+        }
 
-        let keyXML = null;
+        if (!this.#NFe.infNFe.det[index].imposto) {
+            this.#NFe.infNFe.det[index].imposto = {};
+        }
+
+        if (!this.#NFe.infNFe.det[index].imposto.COFINS) {
+            this.#NFe.infNFe.det[index].imposto.COFINS = {};
+        }
+
+        const obj = this.equalizeCOFINSParameters(data);
+
+        let keyXML = "";
+        let confinsItem: Record<string, any> = {};
+
         switch (obj.CST) {
             case '01':
             case '02':
-                keyXML = null;
+                keyXML = 'COFINSAliq';
+                confinsItem = this.generateCOFINSAliq(obj);
                 break;
             case '03':
-                keyXML = "COFINSQtde";
+                keyXML = 'COFINSQtde';
+                confinsItem = this.generateCOFINSQtde(obj);
                 break;
             case '04':
             case '05':
@@ -588,7 +618,8 @@ class Make {
             case '07':
             case '08':
             case '09':
-                keyXML = "COFINSNT";
+                keyXML = 'COFINSNT';
+                confinsItem = this.generateCOFINSNT(obj);
                 break;
             case '49':
             case '50':
@@ -614,20 +645,14 @@ class Make {
             case '75':
             case '98':
             case '99':
-                keyXML = "COFINSOutr";
+                keyXML = 'COFINSOutr';
+                confinsItem = this.generateCOFINSOutr(obj);
                 break;
+            default:
+                throw new Error("CST de COFINS não identificado!");
         }
 
-        if (keyXML == null) {
-            Object.keys(obj).forEach(key => {
-                this.#NFe.infNFe.det[index].imposto.COFINS[key] = obj[key];
-            });
-        } else {
-            this.#NFe.infNFe.det[index].imposto.COFINS[keyXML] = {};
-            Object.keys(obj).forEach(key => {
-                this.#NFe.infNFe.det[index].imposto.COFINS[keyXML][key] = obj[key];
-            });
-        }
+        this.#NFe.infNFe.det[index].imposto.COFINS[keyXML] = confinsItem;
 
         //Calcular ICMSTot
         this.#calICMSTot(obj);
@@ -1188,6 +1213,123 @@ class Make {
         const ipiNT: Record<string, any> = {};
         this.#addChildJS(ipiNT, 'CST', obj.CST, true);
         return ipiNT;
+    }
+
+    #equalizePISParameters(obj: any) {
+        const possible = [
+            'item',
+            'CST',
+            'vBC',
+            'pPIS',
+            'vPIS',
+            'qBCProd',
+            'vAliqProd'
+        ];
+
+        for (const key of possible) {
+            if (obj[key] === undefined) {
+                obj[key] = null;
+            }
+        }
+        return obj;
+    }
+    generatePISAliq(obj: any): Record<string, any> {
+        const pisAliq: Record<string, any> = {};
+        this.#addChildJS(pisAliq, 'CST', obj.CST, true);
+        this.#addChildJS(pisAliq, 'vBC', this.#conditionalNumberFormatting(obj.vBC), true);
+        this.#addChildJS(pisAliq, 'pPIS', this.#conditionalNumberFormatting(obj.pPIS, 4), true);
+        this.#addChildJS(pisAliq, 'vPIS', this.#conditionalNumberFormatting(obj.vPIS), true);
+        return pisAliq;
+    }
+
+    generatePISQtde(obj: any): Record<string, any> {
+        const pisQtde: Record<string, any> = {};
+        this.#addChildJS(pisQtde, 'CST', obj.CST, true);
+        this.#addChildJS(pisQtde, 'qBCProd', this.#conditionalNumberFormatting(obj.qBCProd, 4), true);
+        this.#addChildJS(pisQtde, 'vAliqProd', this.#conditionalNumberFormatting(obj.vAliqProd, 4), true);
+        this.#addChildJS(pisQtde, 'vPIS', this.#conditionalNumberFormatting(obj.vPIS), true);
+        return pisQtde;
+    }
+
+    generatePISNT(obj: any): Record<string, any> {
+        const pisNT: Record<string, any> = {};
+        this.#addChildJS(pisNT, 'CST', obj.CST, true);
+        return pisNT;
+    }
+
+    generatePISOutr(obj: any): Record<string, any> {
+        const pisOutr: Record<string, any> = {};
+        this.#addChildJS(pisOutr, 'CST', obj.CST, true);
+
+        if (obj.qBCProd === null || obj.qBCProd === undefined) {
+            this.#addChildJS(pisOutr, 'vBC', this.#conditionalNumberFormatting(obj.vBC), obj.vBC !== null && obj.vBC !== undefined);
+            this.#addChildJS(pisOutr, 'pPIS', this.#conditionalNumberFormatting(obj.pPIS, 4), obj.pPIS !== null && obj.pPIS !== undefined);
+        } else {
+            this.#addChildJS(pisOutr, 'qBCProd', this.#conditionalNumberFormatting(obj.qBCProd, 4), obj.qBCProd !== null && obj.qBCProd !== undefined);
+            this.#addChildJS(pisOutr, 'vAliqProd', this.#conditionalNumberFormatting(obj.vAliqProd, 4), obj.vAliqProd !== null && obj.vAliqProd !== undefined);
+        }
+
+        this.#addChildJS(pisOutr, 'vPIS', this.#conditionalNumberFormatting(obj.vPIS), obj.vPIS !== null && obj.vPIS !== undefined);
+        return pisOutr;
+    }
+
+    equalizeCOFINSParameters(obj: any) {
+        const possible = [
+            'item',
+            'CST',
+            'vBC',
+            'pCOFINS',
+            'vCOFINS',
+            'qBCProd',
+            'vAliqProd'
+        ];
+
+        for (const key of possible) {
+            if (obj[key] === undefined) {
+                obj[key] = null;
+            }
+        }
+        return obj;
+    }
+
+    generateCOFINSAliq(obj: any): Record<string, any> {
+        const confinsAliq: Record<string, any> = {};
+        this.#addChildJS(confinsAliq, 'CST', obj.CST, true);
+        this.#addChildJS(confinsAliq, 'vBC', this.#conditionalNumberFormatting(obj.vBC), true);
+        this.#addChildJS(confinsAliq, 'pCOFINS', this.#conditionalNumberFormatting(obj.pCOFINS, 4), true);
+        this.#addChildJS(confinsAliq, 'vCOFINS', this.#conditionalNumberFormatting(obj.vCOFINS), true);
+        return confinsAliq;
+    }
+
+    generateCOFINSQtde(obj: any): Record<string, any> {
+        const confinsQtde: Record<string, any> = {};
+        this.#addChildJS(confinsQtde, 'CST', obj.CST, true);
+        this.#addChildJS(confinsQtde, 'qBCProd', this.#conditionalNumberFormatting(obj.qBCProd, 4), true);
+        this.#addChildJS(confinsQtde, 'vAliqProd', this.#conditionalNumberFormatting(obj.vAliqProd, 4), true);
+        this.#addChildJS(confinsQtde, 'vCOFINS', this.#conditionalNumberFormatting(obj.vCOFINS), true);
+        return confinsQtde;
+    }
+
+    generateCOFINSNT(obj: any): Record<string, any> {
+        const confinsNT: Record<string, any> = {};
+        this.#addChildJS(confinsNT, 'CST', obj.CST, true);
+        return confinsNT;
+    }
+
+    generateCOFINSOutr(obj: any): Record<string, any> {
+        const confinsOutr: Record<string, any> = {};
+        this.#addChildJS(confinsOutr, 'CST', obj.CST, true);
+
+        if (obj.qBCProd === null || obj.qBCProd === undefined) {
+            this.#addChildJS(confinsOutr, 'vBC', this.#conditionalNumberFormatting(obj.vBC), obj.vBC !== null && obj.vBC !== undefined);
+            this.#addChildJS(confinsOutr, 'pCOFINS', this.#conditionalNumberFormatting(obj.pCOFINS, 4), obj.pCOFINS !== null && obj.pCOFINS !== undefined);
+        } else {
+            this.#addChildJS(confinsOutr, 'qBCProd', this.#conditionalNumberFormatting(obj.qBCProd, 4), obj.qBCProd !== null && obj.qBCProd !== undefined);
+            this.#addChildJS(confinsOutr, 'vAliqProd', this.#conditionalNumberFormatting(obj.vAliqProd, 4), obj.vAliqProd !== null && obj.vAliqProd !== undefined);
+        }
+
+        this.#addChildJS(confinsOutr, 'vCOFINS', this.#conditionalNumberFormatting(obj.vCOFINS), obj.vCOFINS !== null && obj.vCOFINS !== undefined);
+        return confinsOutr;
     }
 
     xml() {
