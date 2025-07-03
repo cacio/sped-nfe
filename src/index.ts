@@ -1,5 +1,6 @@
 import { Tools } from "./utils/tools.js"
 import { Make } from "./utils/make.js"
 import { cUF2UF, UF2cUF, json2xml, xml2json, formatData, docZip, certInfo, cMun2Mun, cPais2Pais } from "./utils/extras.js"
+import { Complements } from './utils/Complements.js'
 
-export { Tools, Make, cUF2UF, UF2cUF, json2xml, xml2json, formatData, docZip, certInfo, cMun2Mun, cPais2Pais }
+export { Tools, Make, cUF2UF, UF2cUF, json2xml, xml2json, formatData, docZip, certInfo, cMun2Mun, cPais2Pais,Complements}
