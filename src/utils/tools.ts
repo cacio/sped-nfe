@@ -46,6 +46,8 @@ class Tools {
         CNPJ: any;
     };
 
+    public ultimoEventoXml: string | null = null;
+
     constructor(config = { mod: "", xmllint: 'xmllint', UF: '', tpAmb: 2, CSC: "", CSCid: "", versao: "4.00", timeout: 30, openssl: null, CPF: "", CNPJ: "" }, certificado = { pfx: "", senha: "" }) {
         if (typeof config != "object") throw "Tools({config},{}): Config deve ser um objecto!";
         if (typeof config.UF == "undefined") throw "Tools({...,UF:?},{}): UF não definida!";
@@ -424,6 +426,7 @@ class Tools {
                 console.log('[SEFAZ EVENTO] Gerando XML assinado...');
                 let xml = await json2xml(evento);
                 xml = await this.xmlSign(xml, { tag: "infEvento" });
+                this.ultimoEventoXml = xml;
 
                 console.log('[SEFAZ EVENTO] Validando XML...');
                 await this.#xmlValido(xml, `envEvento_v1.00`).catch(reject);
