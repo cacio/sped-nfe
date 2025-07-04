@@ -337,143 +337,162 @@ class Tools {
         });
     }
 
-    async sefazEvento({ chNFe = "", tpEvento = "", nProt = "", xJust = "", nSeqEvento = 1, dhEvento = formatData() }): Promise<string> {
+    async sefazEvento({
+        chNFe = "",
+        tpEvento = "",
+        nProt = "",
+        xJust = "",
+        nSeqEvento = 1,
+        dhEvento = formatData()
+    }: {
+        chNFe: string;
+        tpEvento: string;
+        nProt?: string;
+        xJust?: string;
+        nSeqEvento?: number;
+        dhEvento?: string;
+    }): Promise<string> {
         return new Promise(async (resolve, reject) => {
             try {
+                console.log('[SEFAZ EVENTO] Início do envio do evento');
+
                 if (!chNFe) throw "sefazEvento({chNFe}) -> não definido!";
                 if (!tpEvento) throw "sefazEvento({tpEvento}) -> não definido!";
                 if (!this.#config.CNPJ && !this.#config.CPF) throw "new Tools({CNPJ|CPF}) -> não definido!";
 
-                const geradorLote = function () {
+                const idLote = (() => {
                     const agora = new Date();
-
-                    const ano = agora.getFullYear().toString().slice(2); // Só os 2 últimos dígitos do ano
-                    const mes = String(agora.getMonth() + 1).padStart(2, '0');
-                    const dia = String(agora.getDate()).padStart(2, '0');
-                    const hora = String(agora.getHours()).padStart(2, '0');
-                    const minuto = String(agora.getMinutes()).padStart(2, '0');
-                    const segundo = String(agora.getSeconds()).padStart(2, '0');
-
-                    // Junta tudo
-                    let idLote = `${ano}${mes}${dia}${hora}${minuto}${segundo}`;
-
-                    // Se ainda tiver menos de 15 dígitos, adiciona um número aleatório no final
-                    while (idLote.length < 15) {
-                        idLote += Math.floor(Math.random() * 10); // Adiciona dígitos aleatórios
+                    const pad = (n: number) => String(n).padStart(2, '0');
+                    let lote = `${String(agora.getFullYear()).slice(2)}${pad(agora.getMonth() + 1)}${pad(agora.getDate())}${pad(agora.getHours())}${pad(agora.getMinutes())}${pad(agora.getSeconds())}`;
+                    while (lote.length < 15) {
+                        lote += Math.floor(Math.random() * 10);
                     }
-
-                    return idLote;
-                }
+                    return lote;
+                })();
 
                 let detEvento: any = {
                     "@versao": "1.00",
-                    "descEvento": this.#descEvento(`${tpEvento}`)
+                    "descEvento": this.#descEvento(tpEvento)
                 };
 
-                const cOrgao = !['210200', '210210', '210220', '210240'].includes(tpEvento) ? chNFe.substring(0, 2) : '91';
+                const cOrgao = !['210200', '210210', '210220', '210240'].includes(tpEvento)
+                    ? chNFe.substring(0, 2)
+                    : '91';
 
-                // Adicionar campos específicos por tipo de evento
-                if (tpEvento === "110111") { // Cancelamento
+                // Tipos de evento
+                if (tpEvento === "110111") {
                     if (!nProt) throw "sefazEvento({nProt}) obrigatório para Cancelamento!";
                     if (!xJust) throw "sefazEvento({xJust}) obrigatório para Cancelamento!";
-                    detEvento["nProt"] = nProt;
-                    detEvento["xJust"] = xJust;
-                } else if (tpEvento === "110110") { // Carta de Correção
+                    detEvento.nProt = nProt;
+                    detEvento.xJust = xJust;
+                } else if (tpEvento === "110110") {
                     if (!xJust) throw "sefazEvento({xJust}) obrigatório para Carta de Correção!";
-                    detEvento["xCorrecao"] = xJust;
-                    detEvento["xCondUso"] = "A Carta de Correcao e disciplinada pelo paragrafo 1o-A do art. 7o do Convenio S/N, de 15 de dezembro de 1970 e pode ser utilizada para regularizacao de erro ocorrido na emissao de documento fiscal, desde que o erro nao esteja relacionado com: I - as variaveis que determinam o valor do imposto tais como: base de calculo, aliquota, diferenca de preco, quantidade, valor da operacao ou da prestacao; II - a correcao de dados cadastrais que implique mudanca do remetente ou do destinatario; III - a data de emissao ou de saida.";
-                } else if (tpEvento === "210240") { // Operação não realizada
+                    detEvento.xCorrecao = xJust;
+                    detEvento.xCondUso =
+                        "A Carta de Correcao e disciplinada pelo paragrafo 1o-A do art. 7o do Convenio S/N, de 15 de dezembro de 1970 e pode ser utilizada para regularizacao de erro ocorrido na emissao de documento fiscal, desde que o erro nao esteja relacionado com: I - as variaveis que determinam o valor do imposto tais como: base de calculo, aliquota, diferenca de preco, quantidade, valor da operacao ou da prestacao; II - a correcao de dados cadastrais que implique mudanca do remetente ou do destinatario; III - a data de emissao ou de saida.";
+                } else if (tpEvento === "210240") {
                     if (!xJust) throw "sefazEvento({xJust}) obrigatório para Operação não realizada!";
-                    detEvento["xJust"] = xJust;
+                    detEvento.xJust = xJust;
                 }
-                // Ciência (210210), Confirmação (210200), Desconhecimento (210220) não precisam de campos extras
 
                 const tempUF = urlEventos(cUF2UF[cOrgao], this.#config.versao);
 
                 const evento = {
-                    "envEvento": {
+                    envEvento: {
                         "@xmlns": "http://www.portalfiscal.inf.br/nfe",
                         "@versao": "1.00",
-                        "idLote": "250429141621528",
-                        "evento": {
+                        idLote: idLote,
+                        evento: {
                             "@xmlns": "http://www.portalfiscal.inf.br/nfe",
                             "@versao": "1.00",
-                            "infEvento": {
-                                "@Id": `ID${tpEvento}${chNFe}${nSeqEvento.toString().padStart(2, '0')}`,
+                            infEvento: {
+                                "@Id": `ID${tpEvento}${chNFe}${String(nSeqEvento).padStart(2, '0')}`,
                                 cOrgao,
-                                "tpAmb": this.#config.tpAmb,
-                                "CNPJ": this.#config.CNPJ,
-                                "chNFe": chNFe,
+                                tpAmb: this.#config.tpAmb,
+                                CNPJ: this.#config.CNPJ,
+                                chNFe: chNFe,
                                 dhEvento,
-                                "tpEvento": tpEvento,
-                                "nSeqEvento": nSeqEvento,
-                                "verEvento": "1.00",
-                                "detEvento": detEvento
+                                tpEvento,
+                                nSeqEvento,
+                                verEvento: "1.00",
+                                detEvento: detEvento
                             }
                         }
                     }
                 };
 
-                let xmlSing = await json2xml(evento);
-                xmlSing = await this.xmlSign(xmlSing, { tag: "infEvento" }); //Assinado
-                await this.#xmlValido(xmlSing, `envEvento_v1.00`).catch(reject); //Validar corpo
+                console.log('[SEFAZ EVENTO] Gerando XML assinado...');
+                let xml = await json2xml(evento);
+                xml = await this.xmlSign(xml, { tag: "infEvento" });
 
-                xmlSing = await json2xml({
+                console.log('[SEFAZ EVENTO] Validando XML...');
+                await this.#xmlValido(xml, `envEvento_v1.00`).catch(reject);
+
+                const soapEnvelope = await json2xml({
                     "soap:Envelope": {
                         "@xmlns:soap": "http://www.w3.org/2003/05/soap-envelope",
                         "@xmlns:nfe": "http://www.portalfiscal.inf.br/nfe/wsdl/NFeRecepcaoEvento4",
                         "soap:Body": {
                             "nfe:nfeDadosMsg": {
-                                ...await xml2json(xmlSing),
+                                ...await xml2json(xml),
                                 "@xmlns": "http://www.portalfiscal.inf.br/nfe/wsdl/NFeRecepcaoEvento4"
                             }
                         }
                     }
                 });
 
-                try {
-                    const req = https.request(tempUF[`mod${chNFe.substring(20, 22)}`][(this.#config.tpAmb == 1 ? "producao" : "homologacao")].NFeRecepcaoEvento, {
-                        ...{
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/soap+xml; charset=utf-8',
-                                'Content-Length': xmlSing.length,
-                            },
-                            rejectUnauthorized: false,
+                console.log('[SEFAZ EVENTO] Enviando requisição HTTPS para SEFAZ...');
+                const req = https.request(
+                    tempUF[`mod${chNFe.substring(20, 22)}`][this.#config.tpAmb === 1 ? "producao" : "homologacao"].NFeRecepcaoEvento,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/soap+xml; charset=utf-8',
+                            'Content-Length': Buffer.byteLength(soapEnvelope),
                         },
+                        rejectUnauthorized: false,
                         ...await this.#certTools()
-                    }, (res) => {
-                        let data = '';
+                    },
+                    (res) => {
+                        let data = "";
 
                         res.on('data', (chunk) => {
+                            console.log('[SEFAZ EVENTO] Chunk recebido:', chunk.toString());
                             data += chunk;
                         });
 
                         res.on('end', async () => {
+                            console.log('[SEFAZ EVENTO] Resposta completa recebida.');
                             try {
-                                resolve(await this.#limparSoap(data));
-                            } catch (error) {
-                                resolve(data)
+                                const resposta = await this.#limparSoap(data);
+                                console.log('[SEFAZ EVENTO] XML limpo:', resposta);
+                                resolve(resposta);
+                            } catch (e) {
+                                console.warn('[SEFAZ EVENTO] Falha ao limpar SOAP:', e);
+                                resolve(data);
                             }
                         });
-                    });
+                    }
+                );
 
-                    req.setTimeout(this.#config.timeout * 1000, () => {
-                        reject({
-                            name: 'TimeoutError',
-                            message: 'The operation was aborted due to timeout'
-                        });
-                        req.destroy(); // cancela a requisição
+                req.setTimeout(this.#config.timeout * 1000, () => {
+                    console.error('[SEFAZ EVENTO] Timeout da requisição HTTPS.');
+                    reject({
+                        name: "TimeoutError",
+                        message: "A operação foi abortada por timeout"
                     });
-                    req.on('error', (erro) => {
-                        reject(erro);
-                    });
-                    req.write(xmlSing);
-                    req.end();
-                } catch (erro) {
-                    reject(erro);
-                }
+                    req.destroy();
+                });
+
+                req.on("error", (err) => {
+                    console.error('[SEFAZ EVENTO] Erro na requisição HTTPS:', err);
+                    reject(err);
+                });
+
+                req.write(soapEnvelope);
+                req.end();
             } catch (erro) {
+                console.error('[SEFAZ EVENTO] Erro geral:', erro);
                 reject(erro);
             }
         });

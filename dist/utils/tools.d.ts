@@ -23,12 +23,12 @@ declare class Tools {
     getCertificado(): Promise<object>;
     consultarNFe(chNFe: string): Promise<string>;
     sefazEvento({ chNFe, tpEvento, nProt, xJust, nSeqEvento, dhEvento }: {
-        chNFe?: string | undefined;
-        tpEvento?: string | undefined;
-        nProt?: string | undefined;
-        xJust?: string | undefined;
-        nSeqEvento?: number | undefined;
-        dhEvento?: string | undefined;
+        chNFe: string;
+        tpEvento: string;
+        nProt?: string;
+        xJust?: string;
+        nSeqEvento?: number;
+        dhEvento?: string;
     }): Promise<string>;
     sefazDistDFe({ ultNSU, chNFe }: {
         ultNSU?: string;
