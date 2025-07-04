@@ -1,5 +1,6 @@
 declare class Tools {
     #private;
+    ultimoEventoXml: string | null;
     constructor(config?: {
         mod: string;
         xmllint: string;

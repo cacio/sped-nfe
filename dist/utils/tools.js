@@ -34,6 +34,7 @@ class Tools {
             ca: [] // Uma lista de certificados da cadeia (se houver), ou null
         });
         _Tools_config.set(this, void 0);
+        this.ultimoEventoXml = null;
         if (typeof config != "object")
             throw "Tools({config},{}): Config deve ser um objecto!";
         if (typeof config.UF == "undefined")
@@ -326,6 +327,7 @@ class Tools {
                 console.log('[SEFAZ EVENTO] Gerando XML assinado...');
                 let xml = await json2xml(evento);
                 xml = await this.xmlSign(xml, { tag: "infEvento" });
+                this.ultimoEventoXml = xml;
                 console.log('[SEFAZ EVENTO] Validando XML...');
                 await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_xmlValido).call(this, xml, `envEvento_v1.00`).catch(reject);
                 const soapEnvelope = await json2xml({
