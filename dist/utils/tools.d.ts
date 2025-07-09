@@ -31,6 +31,18 @@ declare class Tools {
         nSeqEvento?: number;
         dhEvento?: string;
     }): Promise<string>;
+    sefazInutiliza({ cUF, ano, CNPJ, modelo, serie, nIni, nFin, xJust, tpAmb, versao }: {
+        cUF: string;
+        ano?: string;
+        CNPJ: string;
+        modelo?: string;
+        serie: number;
+        nIni: number;
+        nFin: number;
+        xJust: string;
+        tpAmb?: number;
+        versao?: string;
+    }): Promise<string>;
     sefazDistDFe({ ultNSU, chNFe }: {
         ultNSU?: string;
         chNFe?: string;

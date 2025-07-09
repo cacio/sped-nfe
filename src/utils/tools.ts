@@ -501,6 +501,129 @@ class Tools {
         });
     }
 
+
+    async sefazInutiliza({
+        cUF,
+        ano = new Date().getFullYear().toString().slice(-2),
+        CNPJ,
+        modelo = "55",
+        serie,
+        nIni,
+        nFin,
+        xJust,
+        tpAmb = 1,
+        versao = "4.00"
+    }: {
+        cUF: string;
+        ano?: string;
+        CNPJ: string;
+        modelo?: string;
+        serie: number;
+        nIni: number;
+        nFin: number;
+        xJust: string;
+        tpAmb?: number;
+        versao?: string;
+    }): Promise<string> {
+        try {
+            if (!cUF || !CNPJ || !serie || !nIni || !nFin || !xJust) {
+                throw new Error("Parâmetros obrigatórios ausentes para inutilização.");
+            }
+
+            const strSerie = String(serie).padStart(3, "0");
+            const strInicio = String(nIni).padStart(9, "0");
+            const strFinal = String(nFin).padStart(9, "0");
+            const idInut = `ID${cUF}${ano}${CNPJ}${modelo}${strSerie}${strInicio}${strFinal}`;
+
+            const json = {
+                inutNFe: {
+                    "@xmlns": "http://www.portalfiscal.inf.br/nfe",
+                    "@versao": versao,
+                    infInut: {
+                        "@Id": idInut,
+                        tpAmb,
+                        xServ: "INUTILIZAR",
+                        cUF,
+                        ano,
+                        CNPJ,
+                        mod: modelo,
+                        serie,
+                        nNFIni: nIni,
+                        nNFFin: nFin,
+                        xJust,
+                    }
+                }
+            };
+
+            console.log('[SEFAZ INUTILIZAÇÃO] Gerando XML...');
+            const xml = await json2xml(json);
+
+            console.log('[SEFAZ INUTILIZAÇÃO] Assinando XML...');
+            const xmlAssinado = await this.xmlSign(xml, { tag: "infInut" });
+
+            console.log('[SEFAZ INUTILIZAÇÃO] Validando XML...');
+            await this.#xmlValido(xmlAssinado, `inutNFe_v${versao}`).catch((e: any) => {
+                throw new Error("XML inválido: " + e.message || e);
+            });
+
+            console.log('[SEFAZ INUTILIZAÇÃO] Montando SOAP envelope...');
+            const soapEnvelope = `
+<soap12:Envelope xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+  <soap12:Body>
+    <nfeDadosMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeInutilizacao4">
+      ${xmlAssinado}
+    </nfeDadosMsg>
+  </soap12:Body>
+</soap12:Envelope>`.trim();
+
+            const uf = cUF2UF[cUF];
+            const tempUF = urlEventos(uf, this.#config.versao);
+            const url = tempUF[`mod${modelo}`][tpAmb === 1 ? "producao" : "homologacao"].NFeInutilizacao;
+
+            console.log('[SEFAZ INUTILIZAÇÃO] Enviando requisição HTTPS...');
+            return new Promise(async (resolve, reject) => {
+                const req = https.request(
+                    url,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/soap+xml; charset=utf-8",
+                            "Content-Length": Buffer.byteLength(soapEnvelope)
+                        },
+                        rejectUnauthorized: false,
+                        ...await this.#certTools()
+                    },
+                    res => {
+                        let response = "";
+                        res.on("data", chunk => response += chunk.toString());
+                        res.on("end", async () => {
+                            try {
+                                const limpo = await this.#limparSoap(response);
+                                resolve(limpo);
+                            } catch (e) {
+                                console.warn('[SEFAZ INUTILIZAÇÃO] Falha ao limpar SOAP:', e);
+                                resolve(response);
+                            }
+                        });
+                    }
+                );
+
+                req.on("error", reject);
+                req.setTimeout(this.#config.timeout * 1000, () => {
+                    req.destroy();
+                    reject(new Error("Timeout na requisição à SEFAZ."));
+                });
+
+                req.write(soapEnvelope);
+                req.end();
+            });
+        } catch (erro) {
+            console.error('[SEFAZ INUTILIZAÇÃO] Erro geral:', erro);
+            throw erro;
+        }
+    }
+
+
     async sefazDistDFe({ ultNSU = undefined, chNFe = undefined }: { ultNSU?: string, chNFe?: string }): Promise<string> {
         return new Promise(async (resolve, reject) => {
             try {
