@@ -421,14 +421,20 @@ class Tools {
             };
             console.log('[SEFAZ INUTILIZAÇÃO] Gerando XML...');
             const xml = await json2xml(json);
-            console.log('XML:', xml);
+            console.log('[DEBUG] XML Gerado:', xml);
             console.log('[SEFAZ INUTILIZAÇÃO] Assinando XML...');
-            const xmlAssinado = await this.xmlSign(xml, { tag: "infInut" });
-            console.log('XML ASSINADO:', xmlAssinado);
+            const xmlAssinado = await this.xmlSign(xml, {
+                tag: "infInut"
+            }); // ✅ Deve gerar <Signature> corretamente POSICIONADA
+            console.log('[DEBUG] XML ASSINADO:', xmlAssinado);
             console.log('[SEFAZ INUTILIZAÇÃO] Validando XML...');
-            await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_xmlValido).call(this, xmlAssinado, `inutNFe_v${versao}`).catch((e) => {
+            try {
+                await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_xmlValido).call(this, xmlAssinado, `inutNFe_v${versao}`);
+            }
+            catch (e) {
+                console.error('[ERRO VALIDAÇÃO XML]:', e);
                 throw new Error("XML inválido: " + (e?.message ?? JSON.stringify(e)));
-            });
+            }
             console.log('[SEFAZ INUTILIZAÇÃO] Montando SOAP envelope...');
             const soapEnvelope = `
 <soap12:Envelope xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">

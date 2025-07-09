@@ -557,17 +557,22 @@ class Tools {
 
             console.log('[SEFAZ INUTILIZAÇÃO] Gerando XML...');
             const xml = await json2xml(json);
-            console.log('XML:', xml);
-            console.log('[SEFAZ INUTILIZAÇÃO] Assinando XML...');
+            console.log('[DEBUG] XML Gerado:', xml);
 
-            const xmlAssinado = await this.xmlSign(xml, { tag: "infInut" });
-            console.log('XML ASSINADO:', xmlAssinado);
+            console.log('[SEFAZ INUTILIZAÇÃO] Assinando XML...');
+            const xmlAssinado = await this.xmlSign(xml, {
+                tag: "infInut"
+            }); // ✅ Deve gerar <Signature> corretamente POSICIONADA
+
+            console.log('[DEBUG] XML ASSINADO:', xmlAssinado);
 
             console.log('[SEFAZ INUTILIZAÇÃO] Validando XML...');
-            await this.#xmlValido(xmlAssinado, `inutNFe_v${versao}`).catch((e: any) => {
+            try {
+                await this.#xmlValido(xmlAssinado, `inutNFe_v${versao}`);
+            } catch (e: any) {
+                console.error('[ERRO VALIDAÇÃO XML]:', e);
                 throw new Error("XML inválido: " + (e?.message ?? JSON.stringify(e)));
-            });
-
+            }
 
             console.log('[SEFAZ INUTILIZAÇÃO] Montando SOAP envelope...');
             const soapEnvelope = `
@@ -625,7 +630,6 @@ class Tools {
             throw erro;
         }
     }
-
 
     async sefazDistDFe({ ultNSU = undefined, chNFe = undefined }: { ultNSU?: string, chNFe?: string }): Promise<string> {
         return new Promise(async (resolve, reject) => {
