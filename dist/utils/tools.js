@@ -451,14 +451,18 @@ class Tools {
                 throw new Error("XML inválido: " + (e?.message ?? JSON.stringify(e)));
             }
             console.log('[SEFAZ INUTILIZAÇÃO] Montando SOAP envelope...');
-            const soapEnvelope = `
-<soap12:Envelope xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
-  <soap12:Body>
-    <nfeDadosMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeInutilizacao4">
-      ${xmlAssinado}
-    </nfeDadosMsg>
-  </soap12:Body>
-</soap12:Envelope>`.trim();
+            const soapEnvelope = await json2xml({
+                "soap:Envelope": {
+                    "@xmlns:soap": "http://www.w3.org/2003/05/soap-envelope",
+                    "@xmlns:nfe": "http://www.portalfiscal.inf.br/nfe/wsdl/NFeInutilizacao4",
+                    "soap:Body": {
+                        "nfe:nfeDadosMsg": {
+                            ...await xml2json(xml),
+                            "@xmlns": "http://www.portalfiscal.inf.br/nfe/wsdl/NFeInutilizacao4"
+                        }
+                    }
+                }
+            });
             const uf = cUF2UF[cUF];
             const tempUF = urlEventos(uf, __classPrivateFieldGet(this, _Tools_config, "f").versao);
             const url = tempUF[`mod${modelo}`][tpAmb === 1 ? "producao" : "homologacao"].NFeInutilizacao;
