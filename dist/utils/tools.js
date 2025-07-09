@@ -138,27 +138,42 @@ class Tools {
         });
     }
     async xmlSign(xmlJSON, data = { tag: "infNFe" }) {
-        return new Promise(async (resvol, reject) => {
-            if (data.tag === undefined)
+        return new Promise(async (resolve, reject) => {
+            if (!data.tag)
                 data.tag = "infNFe";
-            var xml = await this.xml2json(xmlJSON);
-            if (data.tag == "infNFe") {
-                if (xml.NFe.infNFe.ide.mod * 1 == 65) {
+            const tag = data.tag;
+            let xml = await this.xml2json(xmlJSON);
+            // NFC-e tratamento de qrCode
+            if (tag === "infNFe") {
+                if (xml.NFe.infNFe.ide.mod * 1 === 65) {
                     xml.NFe.infNFeSupl.qrCode = __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_gerarQRCodeNFCe).call(this, xml.NFe, "2", __classPrivateFieldGet(this, _Tools_config, "f").CSCid, __classPrivateFieldGet(this, _Tools_config, "f").CSC);
                     xmlJSON = await json2xml(xml);
                 }
                 xml.NFe = {
                     ...xml.NFe,
-                    ...await xml2json(await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_getSignature).call(this, xmlJSON, data.tag))
+                    ...await xml2json(await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_getSignature).call(this, xmlJSON, tag))
                 };
             }
-            else if (data.tag == "infEvento") {
+            // Evento
+            else if (tag === "infEvento") {
                 xml.envEvento.evento = {
                     ...xml.envEvento.evento,
-                    ...(await xml2json(await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_getSignature).call(this, xmlJSON, data.tag)))
+                    ...await xml2json(await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_getSignature).call(this, xmlJSON, tag))
                 };
             }
-            resvol(await json2xml(xml));
+            // 🆕 Inutilização - Aqui está o novo tratamento
+            else if (tag === "infInut") {
+                const assinatura = await xml2json(await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_getSignature).call(this, xmlJSON, tag));
+                if (!assinatura.Signature) {
+                    throw new Error("Assinatura não encontrada no XML assinado.");
+                }
+                xml.inutNFe = {
+                    ...xml.inutNFe,
+                    Signature: assinatura.Signature
+                };
+            }
+            const finalXml = await json2xml(xml);
+            resolve(finalXml);
         });
     }
     async xml2json(xml) {

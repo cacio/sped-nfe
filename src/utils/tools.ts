@@ -158,28 +158,55 @@ class Tools {
     }
 
     async xmlSign(xmlJSON: string, data: any = { tag: "infNFe" }): Promise<string> {
-        return new Promise(async (resvol, reject) => {
-            if (data.tag === undefined) data.tag = "infNFe";
-            var xml = await this.xml2json(xmlJSON) as any;
+        return new Promise(async (resolve, reject) => {
+            if (!data.tag) data.tag = "infNFe";
 
-            if (data.tag == "infNFe") {
-                if (xml.NFe.infNFe.ide.mod * 1 == 65) {
-                    xml.NFe.infNFeSupl.qrCode = this.#gerarQRCodeNFCe(xml.NFe, "2", this.#config.CSCid, this.#config.CSC);
+            const tag = data.tag;
+            let xml = await this.xml2json(xmlJSON) as any;
+
+            // NFC-e tratamento de qrCode
+            if (tag === "infNFe") {
+                if (xml.NFe.infNFe.ide.mod * 1 === 65) {
+                    xml.NFe.infNFeSupl.qrCode = this.#gerarQRCodeNFCe(
+                        xml.NFe,
+                        "2",
+                        this.#config.CSCid,
+                        this.#config.CSC
+                    );
                     xmlJSON = await json2xml(xml);
                 }
+
                 xml.NFe = {
                     ...xml.NFe,
-                    ... await xml2json(await this.#getSignature(xmlJSON, data.tag))
-                };
-            } else if (data.tag == "infEvento") {
-                xml.envEvento.evento = {
-                    ...xml.envEvento.evento,
-                    ... (await xml2json(await this.#getSignature(xmlJSON, data.tag)))
+                    ...await xml2json(await this.#getSignature(xmlJSON, tag))
                 };
             }
-            resvol(await json2xml(xml));
-        })
+
+            // Evento
+            else if (tag === "infEvento") {
+                xml.envEvento.evento = {
+                    ...xml.envEvento.evento,
+                    ...await xml2json(await this.#getSignature(xmlJSON, tag))
+                };
+            }
+
+            // 🆕 Inutilização - Aqui está o novo tratamento
+            else if (tag === "infInut") {
+               const assinatura = await xml2json(await this.#getSignature(xmlJSON, tag));
+                if (!(assinatura as any).Signature) {
+                    throw new Error("Assinatura não encontrada no XML assinado.");
+                }
+                xml.inutNFe = {
+                    ...xml.inutNFe,
+                    Signature: (assinatura as any).Signature
+                };
+            }
+
+            const finalXml = await json2xml(xml);
+            resolve(finalXml);
+        });
     }
+
 
     //Responsavel por gerar assinatura
     async #getSignature(xmlJSON: string, tag: string): Promise<string> {
