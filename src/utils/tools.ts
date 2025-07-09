@@ -557,14 +557,17 @@ class Tools {
 
             console.log('[SEFAZ INUTILIZAÇÃO] Gerando XML...');
             const xml = await json2xml(json);
-
+            console.log('XML:', xml);
             console.log('[SEFAZ INUTILIZAÇÃO] Assinando XML...');
+
             const xmlAssinado = await this.xmlSign(xml, { tag: "infInut" });
+            console.log('XML ASSINADO:', xmlAssinado);
 
             console.log('[SEFAZ INUTILIZAÇÃO] Validando XML...');
             await this.#xmlValido(xmlAssinado, `inutNFe_v${versao}`).catch((e: any) => {
                 throw new Error("XML inválido: " + e.message || e);
             });
+
 
             console.log('[SEFAZ INUTILIZAÇÃO] Montando SOAP envelope...');
             const soapEnvelope = `

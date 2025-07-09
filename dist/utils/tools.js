@@ -421,8 +421,10 @@ class Tools {
             };
             console.log('[SEFAZ INUTILIZAÇÃO] Gerando XML...');
             const xml = await json2xml(json);
+            console.log('XML:', xml);
             console.log('[SEFAZ INUTILIZAÇÃO] Assinando XML...');
             const xmlAssinado = await this.xmlSign(xml, { tag: "infInut" });
+            console.log('XML ASSINADO:', xmlAssinado);
             console.log('[SEFAZ INUTILIZAÇÃO] Validando XML...');
             await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_xmlValido).call(this, xmlAssinado, `inutNFe_v${versao}`).catch((e) => {
                 throw new Error("XML inválido: " + e.message || e);
