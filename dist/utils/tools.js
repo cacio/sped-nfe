@@ -427,7 +427,7 @@ class Tools {
             console.log('XML ASSINADO:', xmlAssinado);
             console.log('[SEFAZ INUTILIZAÇÃO] Validando XML...');
             await __classPrivateFieldGet(this, _Tools_instances, "m", _Tools_xmlValido).call(this, xmlAssinado, `inutNFe_v${versao}`).catch((e) => {
-                throw new Error("XML inválido: " + e.message || e);
+                throw new Error("XML inválido: " + (e?.message ?? JSON.stringify(e)));
             });
             console.log('[SEFAZ INUTILIZAÇÃO] Montando SOAP envelope...');
             const soapEnvelope = `

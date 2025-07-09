@@ -565,7 +565,7 @@ class Tools {
 
             console.log('[SEFAZ INUTILIZAÇÃO] Validando XML...');
             await this.#xmlValido(xmlAssinado, `inutNFe_v${versao}`).catch((e: any) => {
-                throw new Error("XML inválido: " + e.message || e);
+                throw new Error("XML inválido: " + (e?.message ?? JSON.stringify(e)));
             });
 
 
