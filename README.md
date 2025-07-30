@@ -4,7 +4,7 @@ Seja bem-vindo(a) à **Biblioteca de Emissão de NF-e** — sua parceira definit
 
 <div align="center">
 
-📣 **Participe da comunidade!**  
+📣 **Participe da comunidade!**
 💬 Tire dúvidas, compartilhe experiências e colabore com outros desenvolvedores!
 
 👉 [Grupo de Discussão no Google Groups](https://groups.google.com/g/node-sped-nfe)
@@ -53,6 +53,7 @@ Toda a documentação completa com guias, exemplos, status SEFAZ e muito mais es
 | Download NF-e/NFC-e emitidas contra (DistNFe)  | ✅     |
 | Cancelamento de NFe/NFCe emitida (110111) | ✅ |
 | Carta correção de NFe/NFCe emitida (110110) | ✅ |
+| Inutilização de Numeração de NFe/NFCe | ✅ |
 | Manifestação de Destinatário - Ciência da Operação (210210) | ✅ |
 | Manifestação de Destinatário - Confirmação da Operação (210200) | ✅ |
 | Manifestação de Destinatário - Desconhecimento da Operação (210220) | ✅ |
