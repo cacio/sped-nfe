@@ -3,7 +3,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _Make_instances, _Make_NFe, _Make_ICMSTot, _Make_ReformaTribTot, _Make_gerarChaveNFe, _Make_calcularDigitoVerificador, _Make_conditionalNumberFormatting, _Make_equalizeICMSParameters, _Make_addChildJS, _Make_equalizePISParameters, _Make_calICMSTot;
+var _Make_instances, _Make_NFe, _Make_ICMSTot, _Make_gerarChaveNFe, _Make_calcularDigitoVerificador, _Make_conditionalNumberFormatting, _Make_equalizeICMSParameters, _Make_addChildJS, _Make_equalizePISParameters, _Make_calICMSTot;
 import { XMLBuilder } from "fast-xml-parser";
 import { urlEventos } from "./eventos.js";
 import { cUF2UF } from "./extras.js";
@@ -37,22 +37,6 @@ class Make {
             vCOFINS: 0,
             vOutro: 0,
             vNF: 0
-        });
-        // Totais da Reforma Tributária (IS / IBS / CBS)
-        _Make_ReformaTribTot.set(this, {
-            vTotalIS: 0, // Total do Imposto Seletivo
-            vTotalIBS: 0, // Total do IBS
-            vTotalCBS: 0, // Total do CBS
-            vTotalCredPres: 0, // Total de Créditos Presumidos
-            vDifIS: 0, // Total diferido do IS
-            vDifIBS: 0, // Total diferido do IBS
-            vDifCBS: 0, // Total diferido do CBS
-            vMonoIS: 0, // Total monofásico IS
-            vMonoIBS: 0, // Total monofásico IBS
-            vMonoCBS: 0, // Total monofásico CBS
-            vRetIS: 0, // Total retido IS
-            vRetIBS: 0, // Total retido IBS
-            vRetCBS: 0 // Total retido CBS
         });
     }
     formatData(dataUsr = new Date()) {
@@ -319,6 +303,27 @@ class Make {
             default:
                 throw new Error(`CST inválido: ${obj.CST}`);
         }
+    }
+    // Imposto Seletivo (IS)
+    tagImpostoIS(detIndex, obj) {
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[detIndex].imposto) {
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[detIndex].imposto = {};
+        }
+        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[detIndex].imposto.IS = obj;
+    }
+    // Imposto IBS
+    tagImpostoIBS(detIndex, obj) {
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[detIndex].imposto) {
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[detIndex].imposto = {};
+        }
+        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[detIndex].imposto.IBS = obj;
+    }
+    // Imposto CBS
+    tagImpostoCBS(detIndex, obj) {
+        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[detIndex].imposto) {
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[detIndex].imposto = {};
+        }
+        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[detIndex].imposto.CBS = obj;
     }
     tagProdICMSPart(index, obj) {
         if (__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det[index].imposto.ICMS === undefined)
@@ -637,19 +642,6 @@ class Make {
             });
         }
     }
-    // Totais da Reforma Tributária
-    tagTotaisReformaTributaria(obj) {
-        if (obj) {
-            Object.keys(obj).forEach(key => {
-                if (__classPrivateFieldGet(this, _Make_ReformaTribTot, "f").hasOwnProperty(key)) {
-                    __classPrivateFieldGet(this, _Make_ReformaTribTot, "f")[key] = obj[key];
-                }
-            });
-        }
-        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.total)
-            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.total = {};
-        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.total.ReformaTributariaTot = __classPrivateFieldGet(this, _Make_ReformaTribTot, "f");
-    }
     tagISSQNTot(obj) {
         throw "Não implementado!";
     }
@@ -780,93 +772,6 @@ class Make {
     //Endereço para entrega
     tagEntrega(obj) {
         throw "Ainda não configurado!";
-    }
-    // Produtos e serviços (com suporte à Reforma Tributária)
-    tagDet(obj) {
-        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det)
-            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det = [];
-        const det = { prod: {}, imposto: {} };
-        // Produto
-        if (obj.prod) {
-            Object.keys(obj.prod).forEach(key => {
-                det.prod[key] = obj.prod[key];
-            });
-        }
-        // Impostos tradicionais (ICMS/IPI/PIS/COFINS etc.)
-        if (obj.imposto) {
-            det.imposto = obj.imposto;
-        }
-        // Imposto Seletivo (IS)
-        if (obj.IS) {
-            det.imposto.IS = obj.IS;
-        }
-        // IBS
-        if (obj.IBS) {
-            det.imposto.IBS = obj.IBS;
-        }
-        // CBS
-        if (obj.CBS) {
-            det.imposto.CBS = obj.CBS;
-        }
-        // Créditos Presumidos
-        if (obj.CredPres) {
-            det.imposto.CredPres = obj.CredPres;
-        }
-        // Diferimento
-        if (obj.Dif) {
-            det.imposto.Dif = obj.Dif;
-        }
-        // Monofásico
-        if (obj.Mono) {
-            det.imposto.Mono = obj.Mono;
-        }
-        // Retenções
-        if (obj.Ret) {
-            det.imposto.Ret = obj.Ret;
-        }
-        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det.push(det);
-    }
-    // Calcula totais da Reforma Tributária com base nos itens
-    calcTotaisReformaTributaria() {
-        // Zera antes de somar
-        Object.keys(__classPrivateFieldGet(this, _Make_ReformaTribTot, "f")).forEach(key => __classPrivateFieldGet(this, _Make_ReformaTribTot, "f")[key] = 0);
-        if (__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det) {
-            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det.forEach((item) => {
-                if (item.imposto) {
-                    if (item.imposto.IS?.vIS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vTotalIS += Number(item.imposto.IS.vIS);
-                    if (item.imposto.IBS?.vIBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vTotalIBS += Number(item.imposto.IBS.vIBS);
-                    if (item.imposto.CBS?.vCBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vTotalCBS += Number(item.imposto.CBS.vCBS);
-                    if (item.imposto.CredPres?.vCredPresIBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vTotalCredPres += Number(item.imposto.CredPres.vCredPresIBS);
-                    if (item.imposto.CredPres?.vCredPresCBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vTotalCredPres += Number(item.imposto.CredPres.vCredPresCBS);
-                    if (item.imposto.Dif?.vDifIS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vDifIS += Number(item.imposto.Dif.vDifIS);
-                    if (item.imposto.Dif?.vDifIBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vDifIBS += Number(item.imposto.Dif.vDifIBS);
-                    if (item.imposto.Dif?.vDifCBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vDifCBS += Number(item.imposto.Dif.vDifCBS);
-                    if (item.imposto.Mono?.vMonoIS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vMonoIS += Number(item.imposto.Mono.vMonoIS);
-                    if (item.imposto.Mono?.vMonoIBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vMonoIBS += Number(item.imposto.Mono.vMonoIBS);
-                    if (item.imposto.Mono?.vMonoCBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vMonoCBS += Number(item.imposto.Mono.vMonoCBS);
-                    if (item.imposto.Ret?.vRetIS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vRetIS += Number(item.imposto.Ret.vRetIS);
-                    if (item.imposto.Ret?.vRetIBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vRetIBS += Number(item.imposto.Ret.vRetIBS);
-                    if (item.imposto.Ret?.vRetCBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vRetCBS += Number(item.imposto.Ret.vRetCBS);
-                }
-            });
-        }
-        if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.total)
-            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.total = {};
-        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.total.ReformaTributariaTot = __classPrivateFieldGet(this, _Make_ReformaTribTot, "f");
     }
     generateICMS00(obj) {
         const icms00 = {};
@@ -1231,7 +1136,7 @@ class Make {
         return tempBuild.build({ NFe: __classPrivateFieldGet(this, _Make_NFe, "f") });
     }
 }
-_Make_NFe = new WeakMap(), _Make_ICMSTot = new WeakMap(), _Make_ReformaTribTot = new WeakMap(), _Make_instances = new WeakSet(), _Make_gerarChaveNFe = function _Make_gerarChaveNFe() {
+_Make_NFe = new WeakMap(), _Make_ICMSTot = new WeakMap(), _Make_instances = new WeakSet(), _Make_gerarChaveNFe = function _Make_gerarChaveNFe() {
     const chaveSemDV = `${__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.ide.cUF}`.padStart(2, '0') + // Código da UF (2 dígitos)
         __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.ide.dhEmi.substring(2, 4) + __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.ide.dhEmi.substring(5, 7) + // Ano e Mês da emissão (AAMM, 4 dígitos)
         `${__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.emit.CNPJ}`.padStart(14, '0') + // CNPJ do emitente (14 dígitos)

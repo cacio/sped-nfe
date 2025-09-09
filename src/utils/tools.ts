@@ -12,9 +12,6 @@ import { cUF2UF, json2xml, xml2json, formatData, UF2cUF } from "./extras.js"
 import { SignedXml } from 'xml-crypto';
 import { json } from "stream/consumers";
 
-
-
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -97,7 +94,7 @@ class Tools {
 
                 const xmlLote = await this.json2xml(jsonXmlLote);
 
-                console.log('\n📤 XML do Lote enviado:\n', xmlLote);
+                //console.log('\n📤 XML do Lote enviado:\n', xmlLote);
 
                 const tempUF = urlEventos(this.#config.UF, this.#config.versao);
                 const endpoint = tempUF[`mod${this.#config.mod}`][(this.#config.tpAmb == 1 ? "producao" : "homologacao")].NFeAutorizacao;

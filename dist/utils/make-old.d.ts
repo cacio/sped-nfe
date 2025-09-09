@@ -32,6 +32,9 @@ declare class Make {
     tagOrigComb(): void;
     tagImposto(): void;
     tagProdICMS(index: number, data: any): void;
+    tagImpostoIS(detIndex: number, obj: any): void;
+    tagImpostoIBS(detIndex: number, obj: any): void;
+    tagImpostoCBS(detIndex: number, obj: any): void;
     tagProdICMSPart(index: number, obj: any): void;
     tagProdICMSST(index: number, obj: any): void;
     tagProdICMSSN(index: number, obj: any): void;
@@ -45,7 +48,6 @@ declare class Make {
     tagProdISSQN(index: number, obj: any): void;
     tagProdImpostoDevol(index: number, obj: any): void;
     tagICMSTot(obj?: null): void;
-    tagTotaisReformaTributaria(obj?: any): void;
     tagISSQNTot(obj: any): void;
     tagRetTrib(obj: any): void;
     tagTransp(obj: any): void;
@@ -75,8 +77,6 @@ declare class Make {
     tagInfRespTec(obj: any): void;
     tagRetiEnder(obj: any): void;
     tagEntrega(obj: any): void;
-    tagDet(obj: any): void;
-    calcTotaisReformaTributaria(): void;
     generateICMS00(obj: any): Record<string, any>;
     generateICMS02(obj: any): Record<string, any>;
     generateICMS10(obj: any): Record<string, any>;

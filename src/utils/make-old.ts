@@ -36,23 +36,6 @@ class Make {
         vNF: 0
     };
 
-    // Totais da Reforma Tributária (IS / IBS / CBS)
-    #ReformaTribTot: Record<string, number> = {
-        vTotalIS: 0,        // Total do Imposto Seletivo
-        vTotalIBS: 0,       // Total do IBS
-        vTotalCBS: 0,       // Total do CBS
-        vTotalCredPres: 0,  // Total de Créditos Presumidos
-        vDifIS: 0,          // Total diferido do IS
-        vDifIBS: 0,         // Total diferido do IBS
-        vDifCBS: 0,         // Total diferido do CBS
-        vMonoIS: 0,         // Total monofásico IS
-        vMonoIBS: 0,        // Total monofásico IBS
-        vMonoCBS: 0,        // Total monofásico CBS
-        vRetIS: 0,          // Total retido IS
-        vRetIBS: 0,         // Total retido IBS
-        vRetCBS: 0          // Total retido CBS
-    };
-
     formatData(dataUsr = new Date()) {
         const ano = dataUsr.getFullYear();
         const mes = String(dataUsr.getMonth() + 1).padStart(2, '0'); // Adiciona 1 porque os meses começam do 0
@@ -353,6 +336,31 @@ class Make {
                 throw new Error(`CST inválido: ${obj.CST}`);
         }
     }
+
+    // Imposto Seletivo (IS)
+    tagImpostoIS(detIndex: number, obj: any) {
+        if (!this.#NFe.infNFe.det[detIndex].imposto) {
+            this.#NFe.infNFe.det[detIndex].imposto = {};
+        }
+        this.#NFe.infNFe.det[detIndex].imposto.IS = obj;
+    }
+
+    // Imposto IBS
+    tagImpostoIBS(detIndex: number, obj: any) {
+        if (!this.#NFe.infNFe.det[detIndex].imposto) {
+            this.#NFe.infNFe.det[detIndex].imposto = {};
+        }
+        this.#NFe.infNFe.det[detIndex].imposto.IBS = obj;
+    }
+
+    // Imposto CBS
+    tagImpostoCBS(detIndex: number, obj: any) {
+        if (!this.#NFe.infNFe.det[detIndex].imposto) {
+            this.#NFe.infNFe.det[detIndex].imposto = {};
+        }
+        this.#NFe.infNFe.det[detIndex].imposto.CBS = obj;
+    }
+
 
 
     tagProdICMSPart(index: number, obj: any) {
@@ -717,20 +725,6 @@ class Make {
         }
     }
 
-    // Totais da Reforma Tributária
-    tagTotaisReformaTributaria(obj?: any) {
-        if (obj) {
-            Object.keys(obj).forEach(key => {
-                if (this.#ReformaTribTot.hasOwnProperty(key)) {
-                    this.#ReformaTribTot[key] = obj[key];
-                }
-            });
-        }
-        if (!this.#NFe.infNFe.total) this.#NFe.infNFe.total = {};
-        this.#NFe.infNFe.total.ReformaTributariaTot = this.#ReformaTribTot;
-    }
-
-
     tagISSQNTot(obj: any) {
         throw "Não implementado!";
     }
@@ -896,96 +890,6 @@ class Make {
     tagEntrega(obj: any) {
         throw "Ainda não configurado!";
     }
-
-    // Produtos e serviços (com suporte à Reforma Tributária)
-    tagDet(obj: any) {
-        if (!this.#NFe.infNFe.det) this.#NFe.infNFe.det = [];
-
-        const det: any = { prod: {}, imposto: {} };
-
-        // Produto
-        if (obj.prod) {
-            Object.keys(obj.prod).forEach(key => {
-                det.prod[key] = obj.prod[key];
-            });
-        }
-
-        // Impostos tradicionais (ICMS/IPI/PIS/COFINS etc.)
-        if (obj.imposto) {
-            det.imposto = obj.imposto;
-        }
-
-        // Imposto Seletivo (IS)
-        if (obj.IS) {
-            det.imposto.IS = obj.IS;
-        }
-
-        // IBS
-        if (obj.IBS) {
-            det.imposto.IBS = obj.IBS;
-        }
-
-        // CBS
-        if (obj.CBS) {
-            det.imposto.CBS = obj.CBS;
-        }
-
-        // Créditos Presumidos
-        if (obj.CredPres) {
-            det.imposto.CredPres = obj.CredPres;
-        }
-
-        // Diferimento
-        if (obj.Dif) {
-            det.imposto.Dif = obj.Dif;
-        }
-
-        // Monofásico
-        if (obj.Mono) {
-            det.imposto.Mono = obj.Mono;
-        }
-
-        // Retenções
-        if (obj.Ret) {
-            det.imposto.Ret = obj.Ret;
-        }
-
-        this.#NFe.infNFe.det.push(det);
-    }
-
-    // Calcula totais da Reforma Tributária com base nos itens
-    calcTotaisReformaTributaria() {
-        // Zera antes de somar
-        Object.keys(this.#ReformaTribTot).forEach(key => this.#ReformaTribTot[key] = 0);
-
-        if (this.#NFe.infNFe.det) {
-            this.#NFe.infNFe.det.forEach((item: any) => {
-                if (item.imposto) {
-                    if (item.imposto.IS?.vIS) this.#ReformaTribTot.vTotalIS += Number(item.imposto.IS.vIS);
-                    if (item.imposto.IBS?.vIBS) this.#ReformaTribTot.vTotalIBS += Number(item.imposto.IBS.vIBS);
-                    if (item.imposto.CBS?.vCBS) this.#ReformaTribTot.vTotalCBS += Number(item.imposto.CBS.vCBS);
-                    if (item.imposto.CredPres?.vCredPresIBS) this.#ReformaTribTot.vTotalCredPres += Number(item.imposto.CredPres.vCredPresIBS);
-                    if (item.imposto.CredPres?.vCredPresCBS) this.#ReformaTribTot.vTotalCredPres += Number(item.imposto.CredPres.vCredPresCBS);
-
-                    if (item.imposto.Dif?.vDifIS) this.#ReformaTribTot.vDifIS += Number(item.imposto.Dif.vDifIS);
-                    if (item.imposto.Dif?.vDifIBS) this.#ReformaTribTot.vDifIBS += Number(item.imposto.Dif.vDifIBS);
-                    if (item.imposto.Dif?.vDifCBS) this.#ReformaTribTot.vDifCBS += Number(item.imposto.Dif.vDifCBS);
-
-                    if (item.imposto.Mono?.vMonoIS) this.#ReformaTribTot.vMonoIS += Number(item.imposto.Mono.vMonoIS);
-                    if (item.imposto.Mono?.vMonoIBS) this.#ReformaTribTot.vMonoIBS += Number(item.imposto.Mono.vMonoIBS);
-                    if (item.imposto.Mono?.vMonoCBS) this.#ReformaTribTot.vMonoCBS += Number(item.imposto.Mono.vMonoCBS);
-
-                    if (item.imposto.Ret?.vRetIS) this.#ReformaTribTot.vRetIS += Number(item.imposto.Ret.vRetIS);
-                    if (item.imposto.Ret?.vRetIBS) this.#ReformaTribTot.vRetIBS += Number(item.imposto.Ret.vRetIBS);
-                    if (item.imposto.Ret?.vRetCBS) this.#ReformaTribTot.vRetCBS += Number(item.imposto.Ret.vRetCBS);
-                }
-            });
-        }
-
-        if (!this.#NFe.infNFe.total) this.#NFe.infNFe.total = {};
-        this.#NFe.infNFe.total.ReformaTributariaTot = this.#ReformaTribTot;
-    }
-
 
     //Sistema gera a chave da nota fiscal
     #gerarChaveNFe() {
