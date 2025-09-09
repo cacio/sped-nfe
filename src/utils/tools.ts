@@ -94,7 +94,7 @@ class Tools {
 
                 const xmlLote = await this.json2xml(jsonXmlLote);
 
-                //console.log('\n📤 XML do Lote enviado:\n', xmlLote);
+                console.log('\n📤 XML do Lote enviado:\n', xmlLote);
 
                 const tempUF = urlEventos(this.#config.UF, this.#config.versao);
                 const endpoint = tempUF[`mod${this.#config.mod}`][(this.#config.tpAmb == 1 ? "producao" : "homologacao")].NFeAutorizacao;

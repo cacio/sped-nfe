@@ -86,7 +86,7 @@ class Tools {
                     },
                 };
                 const xmlLote = await this.json2xml(jsonXmlLote);
-                //console.log('\n📤 XML do Lote enviado:\n', xmlLote);
+                console.log('\n📤 XML do Lote enviado:\n', xmlLote);
                 const tempUF = urlEventos(__classPrivateFieldGet(this, _Tools_config, "f").UF, __classPrivateFieldGet(this, _Tools_config, "f").versao);
                 const endpoint = tempUF[`mod${__classPrivateFieldGet(this, _Tools_config, "f").mod}`][(__classPrivateFieldGet(this, _Tools_config, "f").tpAmb == 1 ? "producao" : "homologacao")].NFeAutorizacao;
                 const req = https.request(endpoint, {

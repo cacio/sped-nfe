@@ -827,46 +827,35 @@ class Make {
         __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det.push(det);
     }
     // Calcula totais da Reforma Tributária com base nos itens
+    // Calcula totais da Reforma Tributária com base nos itens (compatível com layout SEFAZ)
     calcTotaisReformaTributaria() {
-        // Zera antes de somar
-        Object.keys(__classPrivateFieldGet(this, _Make_ReformaTribTot, "f")).forEach(key => __classPrivateFieldGet(this, _Make_ReformaTribTot, "f")[key] = 0);
+        let ISTot = {};
+        let IBSCBSTot = {};
         if (__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det) {
             __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.det.forEach((item) => {
-                if (item.imposto) {
-                    if (item.imposto.IS?.vIS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vTotalIS += Number(item.imposto.IS.vIS);
-                    if (item.imposto.IBS?.vIBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vTotalIBS += Number(item.imposto.IBS.vIBS);
-                    if (item.imposto.CBS?.vCBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vTotalCBS += Number(item.imposto.CBS.vCBS);
-                    if (item.imposto.CredPres?.vCredPresIBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vTotalCredPres += Number(item.imposto.CredPres.vCredPresIBS);
-                    if (item.imposto.CredPres?.vCredPresCBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vTotalCredPres += Number(item.imposto.CredPres.vCredPresCBS);
-                    if (item.imposto.Dif?.vDifIS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vDifIS += Number(item.imposto.Dif.vDifIS);
-                    if (item.imposto.Dif?.vDifIBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vDifIBS += Number(item.imposto.Dif.vDifIBS);
-                    if (item.imposto.Dif?.vDifCBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vDifCBS += Number(item.imposto.Dif.vDifCBS);
-                    if (item.imposto.Mono?.vMonoIS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vMonoIS += Number(item.imposto.Mono.vMonoIS);
-                    if (item.imposto.Mono?.vMonoIBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vMonoIBS += Number(item.imposto.Mono.vMonoIBS);
-                    if (item.imposto.Mono?.vMonoCBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vMonoCBS += Number(item.imposto.Mono.vMonoCBS);
-                    if (item.imposto.Ret?.vRetIS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vRetIS += Number(item.imposto.Ret.vRetIS);
-                    if (item.imposto.Ret?.vRetIBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vRetIBS += Number(item.imposto.Ret.vRetIBS);
-                    if (item.imposto.Ret?.vRetCBS)
-                        __classPrivateFieldGet(this, _Make_ReformaTribTot, "f").vRetCBS += Number(item.imposto.Ret.vRetCBS);
+                if (item.imposto?.IS?.vIS) {
+                    ISTot.vTotIS = (Number(ISTot.vTotIS || 0) + Number(item.imposto.IS.vIS)).toFixed(2);
+                }
+                if (item.imposto?.IBS?.vIBS) {
+                    IBSCBSTot.vTotIBS = (Number(IBSCBSTot.vTotIBS || 0) + Number(item.imposto.IBS.vIBS)).toFixed(2);
+                }
+                if (item.imposto?.CBS?.vCBS) {
+                    IBSCBSTot.vTotCBS = (Number(IBSCBSTot.vTotCBS || 0) + Number(item.imposto.CBS.vCBS)).toFixed(2);
+                }
+                if (item.imposto?.CredPres?.vCredPresIBS) {
+                    IBSCBSTot.vTotCredPres = (Number(IBSCBSTot.vTotCredPres || 0) + Number(item.imposto.CredPres.vCredPresIBS)).toFixed(2);
+                }
+                if (item.imposto?.CredPres?.vCredPresCBS) {
+                    IBSCBSTot.vTotCredPres = (Number(IBSCBSTot.vTotCredPres || 0) + Number(item.imposto.CredPres.vCredPresCBS)).toFixed(2);
                 }
             });
         }
         if (!__classPrivateFieldGet(this, _Make_NFe, "f").infNFe.total)
             __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.total = {};
-        __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.total.ReformaTributariaTot = __classPrivateFieldGet(this, _Make_ReformaTribTot, "f");
+        if (Object.keys(ISTot).length > 0)
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.total.ISTot = ISTot;
+        if (Object.keys(IBSCBSTot).length > 0)
+            __classPrivateFieldGet(this, _Make_NFe, "f").infNFe.total.IBSCBSTot = IBSCBSTot;
     }
     generateICMS00(obj) {
         const icms00 = {};
